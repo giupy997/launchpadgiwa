@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtNum } from "@/lib/format";
+
 /** Minimal monochrome SVG line chart of trade-implied prices. */
 export function PriceChart({ points }: { points: number[] }) {
   if (points.length < 2) {
@@ -45,8 +47,4 @@ export function PriceChart({ points }: { points: number[] }) {
   );
 }
 
-function fmt(v: number): string {
-  if (v === 0) return "0";
-  if (v < 1e-6) return v.toExponential(2);
-  return v.toLocaleString("en-US", { maximumSignificantDigits: 4 });
-}
+const fmt = fmtNum;
