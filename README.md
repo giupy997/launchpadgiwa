@@ -54,6 +54,7 @@ future multichain deployments (Monad, MegaETH, ...).
 |---|---|---|
 | GIWA Sepolia (91342) | Launchpad | [`0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d`](https://sepolia-explorer.giwa.io/address/0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d) — v5 |
 | Robinhood Chain (4663) | Launchpad | [`0xf14987fc03d34129736B56c1E882732AA9796E34`](https://robinhoodchain.blockscout.com/address/0xf14987fc03d34129736B56c1E882732AA9796E34) — v5 |
+| Robinhood Chain (4663) | UniV3Migrator | [`0xfF103001091e299580f378c79d53d894Bd7a45CC`](https://robinhoodchain.blockscout.com/address/0xfF103001091e299580f378c79d53d894Bd7a45CC) — wired via setMigrator |
 
 (previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)
 
@@ -102,8 +103,8 @@ cd contracts && source .env && forge script script/Deploy.s.sol --rpc-url giwa_s
 - [ ] `IDexMigrator` adapter for a DEX on GIWA (to pick once the mainnet
       ecosystem is live)
 - [x] Trade feed + price chart from on-chain events (client-side getLogs)
-- [ ] Redeploy Robinhood Chain on v5 (cashback) + deploy UniV3Migrator and
-      wire it with setMigrator
+- [x] Robinhood v5 + UniV3Migrator deployed, verified and wired: graduation
+      now auto-migrates to a locked full-range Uniswap v3 pool (1% tier)
 - [ ] End-to-end frontend test with a wallet (MetaMask) on GIWA Sepolia
 - [ ] Verify permissionless deploy policy on GIWA mainnet
 - [ ] Legal review (MiCA) before public launch
