@@ -1,5 +1,5 @@
 import { defineChain } from "viem";
-import { sepolia } from "viem/chains";
+import { mainnet, sepolia } from "viem/chains";
 import { createConfig, http, injected } from "wagmi";
 
 export const giwaSepolia = defineChain({
@@ -36,7 +36,7 @@ export const robinhood = defineChain({
   },
 });
 
-export { sepolia };
+export { sepolia, mainnet };
 
 // Chains the app runs on (shown in the chain switcher).
 export const APP_CHAINS = [giwaSepolia, robinhood] as const;
@@ -53,11 +53,12 @@ export const L1_STANDARD_BRIDGE: `0x${string}` =
   "0x77b2ffc0F57598cAe1DB76cb398059cF5d10A7E7";
 
 export const config = createConfig({
-  chains: [giwaSepolia, robinhood, sepolia],
+  chains: [giwaSepolia, robinhood, sepolia, mainnet],
   connectors: [injected()],
   transports: {
     [giwaSepolia.id]: http(),
     [robinhood.id]: http(),
     [sepolia.id]: http(),
+    [mainnet.id]: http(),
   },
 });

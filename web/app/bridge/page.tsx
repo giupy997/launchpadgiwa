@@ -9,10 +9,18 @@ import {
   useSwitchChain,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { giwaSepolia, sepolia, L1_STANDARD_BRIDGE } from "@/lib/config";
+import { giwaSepolia, robinhood, sepolia, mainnet, L1_STANDARD_BRIDGE } from "@/lib/config";
+import { useAppChain } from "@/lib/hooks";
 import { fmtEth } from "@/lib/format";
 
 export default function BridgePage() {
+  const chain = useAppChain();
+  return chain.id === robinhood.id ? <RobinhoodBridge /> : <GiwaBridge />;
+}
+
+/* ---------------------------------------------------------------- GIWA */
+
+function GiwaBridge() {
   const { address: user, isConnected, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
   const [amount, setAmount] = useState("");
@@ -51,16 +59,10 @@ export default function BridgePage() {
 
   return (
     <div className="max-w-md mx-auto space-y-6">
-      <h1 className="font-mono text-2xl font-bold tracking-[0.15em] uppercase text-center py-2">
-        Bridge
-      </h1>
+      <Header />
       <p className="text-sm text-zinc-400 text-center">
         Move test ETH from Ethereum Sepolia to GIWA Sepolia through the official
         OP Stack Standard Bridge.
-      </p>
-      <p className="text-xs text-zinc-600 text-center">
-        For Robinhood Chain, use the official Robinhood bridge — this section
-        covers GIWA only.
       </p>
 
       <div className="grid grid-cols-2 gap-3">
@@ -160,6 +162,82 @@ export default function BridgePage() {
         .
       </p>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------ Robinhood */
+
+function RobinhoodBridge() {
+  const { address: user } = useAccount();
+
+  const { data: l1Bal } = useBalance({
+    address: user,
+    chainId: mainnet.id,
+    query: { enabled: !!user, refetchInterval: 15_000 },
+  });
+  const { data: l2Bal } = useBalance({
+    address: user,
+    chainId: robinhood.id,
+    query: { enabled: !!user, refetchInterval: 15_000 },
+  });
+
+  return (
+    <div className="max-w-md mx-auto space-y-6">
+      <Header />
+      <p className="text-sm text-zinc-400 text-center">
+        Robinhood Chain is an Arbitrum Orbit rollup: deposits and withdrawals
+        go through the official Arbitrum canonical bridge, with Ethereum as
+        the source and Robinhood Chain as the destination.
+      </p>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Balance label="Ethereum" value={l1Bal?.value} />
+        <Balance label="Robinhood Chain" value={l2Bal?.value} />
+      </div>
+
+      <a
+        href="https://bridge.arbitrum.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full rounded-full bg-white py-2.5 font-semibold text-black hover:bg-zinc-200 text-center"
+      >
+        Open the Arbitrum canonical bridge ↗
+      </a>
+
+      <div className="rounded-xl border border-zinc-800 p-5 space-y-2">
+        <div className="font-mono text-[10px] tracking-widest uppercase text-zinc-500">
+          How it works
+        </div>
+        <ul className="text-sm text-zinc-400 space-y-1.5 list-disc list-inside">
+          <li>Deposits (Ethereum → Robinhood) confirm in ~10 minutes.</li>
+          <li>Withdrawals follow the Arbitrum challenge period before finalizing.</li>
+          <li>This is real ETH on mainnet — double-check every transaction.</li>
+        </ul>
+      </div>
+
+      <p className="text-xs text-zinc-600 text-center">
+        ⚠ Beware of fake &quot;Robinhood bridge&quot; sites. Use only the
+        canonical bridge linked above — see the{" "}
+        <a
+          href="https://docs.robinhood.com/chain/bridging/"
+          target="_blank"
+          className="underline hover:text-zinc-400"
+        >
+          official bridging docs
+        </a>
+        .
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ shared */
+
+function Header() {
+  return (
+    <h1 className="font-mono text-2xl font-bold tracking-[0.15em] uppercase text-center py-2">
+      Bridge
+    </h1>
   );
 }
 

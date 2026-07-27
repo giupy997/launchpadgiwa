@@ -21,8 +21,11 @@ future multichain deployments (Monad, MegaETH, ...).
     on-chain quotes, automatic approve and 1% slippage guard
   - `/swap`: ETH ↔ token swaps on the curve; token → token routed
     through ETH in two transactions
-  - `/bridge`: ETH deposits Ethereum Sepolia → GIWA via the OP Stack
-    Standard Bridge (L1StandardBridge `0x77b2ffc0F57598cAe1DB76cb398059cF5d10A7E7`)
+  - `/bridge`: chain-aware — on GIWA, in-app ETH deposits Ethereum
+    Sepolia → GIWA via the OP Stack Standard Bridge (L1StandardBridge
+    `0x77b2ffc0F57598cAe1DB76cb398059cF5d10A7E7`); on Robinhood Chain,
+    live Ethereum/Robinhood balances and a link to the Arbitrum
+    canonical bridge (the official route per Robinhood docs)
   - `/profile`: connected wallet holdings and created tokens
 
 ## Curve parameters
