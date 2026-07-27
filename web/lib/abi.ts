@@ -175,6 +175,11 @@ export const launchpadAbi = [
             "name": "telegram",
             "type": "string",
             "internalType": "string"
+          },
+          {
+            "name": "livestream",
+            "type": "string",
+            "internalType": "string"
           }
         ]
       }
@@ -292,6 +297,25 @@ export const launchpadAbi = [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "feeRecipient",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -441,6 +465,24 @@ export const launchpadAbi = [
   },
   {
     "type": "function",
+    "name": "setFeeRecipient",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setMigrator",
     "inputs": [
       {
@@ -508,6 +550,11 @@ export const launchpadAbi = [
         "name": "telegram",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "livestream",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -569,6 +616,11 @@ export const launchpadAbi = [
           },
           {
             "name": "telegram",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "livestream",
             "type": "string",
             "internalType": "string"
           }
@@ -649,6 +701,25 @@ export const launchpadAbi = [
   },
   {
     "type": "event",
+    "name": "FeeRecipientUpdated",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "FeeUpdated",
     "inputs": [
       {
@@ -709,6 +780,12 @@ export const launchpadAbi = [
       },
       {
         "name": "telegram",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "livestream",
         "type": "string",
         "indexed": false,
         "internalType": "string"

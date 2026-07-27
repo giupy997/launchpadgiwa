@@ -15,7 +15,14 @@ export function TokenCard({ token: t }: { token: TokenInfo }) {
       <div className="flex items-center gap-3">
         <TokenLogo uri={t.meta.logoURI} symbol={t.symbol} size={44} />
         <div className="min-w-0">
-          <div className="font-semibold truncate">{t.name}</div>
+          <div className="font-semibold truncate flex items-center gap-2">
+            {t.name}
+            {t.meta.livestream && (
+              <span className="font-mono text-[9px] tracking-widest uppercase border border-white rounded-full px-1.5 py-px shrink-0">
+                ● Live
+              </span>
+            )}
+          </div>
           <div className="font-mono text-xs text-zinc-400">${t.symbol}</div>
         </div>
       </div>

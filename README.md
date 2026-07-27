@@ -9,8 +9,10 @@ future multichain deployments (Monad, MegaETH, ...).
 - `contracts/` — smart contracts (Solidity + Foundry)
   - `src/Launchpad.sol` — factory + bonding curve (constant product with
     virtual reserves), graduation and DEX migration; on-chain token metadata
-    (1:1 logo URI, website, X, Telegram) editable by the creator; 1% trade fee
-    split 60% to the token creator (pull-based `claimCreatorFees`) / 40% treasury
+    (1:1 logo URI, website, X, Telegram, livestream URL) editable by the
+    creator; 1% trade fee split 60% to the token creator (pull-based
+    `claimCreatorFees`) / 40% treasury, with a per-token creator-settable
+    fee recipient (`setFeeRecipient`, pump.fun-style redirect)
   - `src/LaunchToken.sol` — ERC-20 created by the launchpad; transfers locked
     until graduation
   - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
@@ -21,7 +23,9 @@ future multichain deployments (Monad, MegaETH, ...).
   - `/token/[address]`: curve stats, progress bar, buy/sell box with
     on-chain quotes, automatic approve and 1% slippage guard; price chart
     and trade feed built client-side from on-chain events (no indexer:
-    chunked `eth_getLogs` from the deployment block)
+    chunked `eth_getLogs` from the deployment block); embedded livestream
+    player (YouTube/Twitch allowlist) with LIVE badges in Explore; creator
+    panel to go live and redirect fees
   - `/swap`: ETH ↔ token swaps on the curve; token → token routed
     through ETH in two transactions
   - `/bridge`: chain-aware — on GIWA, in-app ETH deposits Ethereum
@@ -43,7 +47,7 @@ future multichain deployments (Monad, MegaETH, ...).
 
 | Chain | Contract | Address |
 |---|---|---|
-| GIWA Sepolia (91342) | Launchpad | [`0xD74910600799db791e50BaBF3C7493AAd8A3B258`](https://sepolia-explorer.giwa.io/address/0xD74910600799db791e50BaBF3C7493AAd8A3B258) |
+| GIWA Sepolia (91342) | Launchpad | [`0xF066f4E454d1A06829eA836197eEf7dedACA7dfe`](https://sepolia-explorer.giwa.io/address/0xF066f4E454d1A06829eA836197eEf7dedACA7dfe) |
 | Robinhood Chain (4663) | Launchpad | [`0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85`](https://robinhoodchain.blockscout.com/address/0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85) — pre-creator-fees, redeploy pending |
 
 (previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)

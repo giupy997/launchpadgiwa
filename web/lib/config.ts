@@ -43,13 +43,13 @@ export const APP_CHAINS = [giwaSepolia, robinhood] as const;
 
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}` | undefined> = {
-  [giwaSepolia.id]: "0xD74910600799db791e50BaBF3C7493AAd8A3B258",
+  [giwaSepolia.id]: "0xF066f4E454d1A06829eA836197eEf7dedACA7dfe",
   [robinhood.id]: "0x8ACf54FC1288Dd6E5B2292B1FB75c2123408cEd1",
 };
 
 // Launchpad deployment blocks: where on-chain event scans start.
 export const LAUNCHPAD_DEPLOY_BLOCK: Record<number, bigint> = {
-  [giwaSepolia.id]: 31_828_882n,
+  [giwaSepolia.id]: 31_832_799n,
   [robinhood.id]: 20_921_974n,
 };
 

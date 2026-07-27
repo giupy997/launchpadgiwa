@@ -60,6 +60,7 @@ export function CreateTokenForm() {
           website: website.trim(),
           twitter: twitter.trim(),
           telegram: telegram.trim(),
+          livestream: "",
         },
       ],
       value: initialBuy ? parseEther(initialBuy) : 0n,

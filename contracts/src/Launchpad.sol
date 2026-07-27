@@ -56,22 +56,30 @@ contract Launchpad is Ownable, ReentrancyGuard {
     }
 
     /// Off-chain presentation data, stored on-chain so the frontend needs no
-    /// indexer. logoURI should point to a square (1:1) image.
+    /// indexer. logoURI should point to a square (1:1) image; livestream is
+    /// the URL of the creator's live broadcast (empty = not live).
     struct TokenMetadata {
         string logoURI;
         string website;
         string twitter;
         string telegram;
+        string livestream;
     }
 
     mapping(address token => Curve) public curves;
     mapping(address token => TokenMetadata) public tokenMetadata;
+    /// Per-token override for where the creator share of fees accrues.
+    /// address(0) = the token's creator.
+    mapping(address token => address) public feeRecipient;
     address[] public allTokens;
 
     // ---------------------------------------------------------------- events
 
     event TokenCreated(address indexed token, address indexed creator, string name, string symbol);
-    event MetadataUpdated(address indexed token, string logoURI, string website, string twitter, string telegram);
+    event MetadataUpdated(
+        address indexed token, string logoURI, string website, string twitter, string telegram, string livestream
+    );
+    event FeeRecipientUpdated(address indexed token, address indexed recipient);
     event Bought(address indexed token, address indexed buyer, uint256 ethIn, uint256 tokensOut, uint256 fee);
     event Sold(address indexed token, address indexed seller, uint256 tokensIn, uint256 ethOut, uint256 fee);
     event Graduated(address indexed token, uint256 raisedEth);
@@ -120,11 +128,21 @@ contract Launchpad is Ownable, ReentrancyGuard {
         tokenMetadata[token] = meta;
         allTokens.push(token);
         emit TokenCreated(token, msg.sender, name, symbol);
-        emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram);
+        emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram, meta.livestream);
 
         if (msg.value > 0) {
             _buy(token, msg.sender, msg.value, minTokensOut);
         }
+    }
+
+    /// @notice Redirect this token's creator fee share to another wallet
+    ///         (address(0) resets to the creator). Creator only.
+    function setFeeRecipient(address token, address recipient) external {
+        Curve storage c = curves[token];
+        if (c.vEth == 0) revert UnknownToken();
+        if (msg.sender != c.creator) revert NotCreator();
+        feeRecipient[token] = recipient;
+        emit FeeRecipientUpdated(token, recipient);
     }
 
     /// @notice The token creator can update logo and links at any time.
@@ -133,7 +151,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
         if (c.vEth == 0) revert UnknownToken();
         if (msg.sender != c.creator) revert NotCreator();
         tokenMetadata[token] = meta;
-        emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram);
+        emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram, meta.livestream);
     }
 
     // ---------------------------------------------------------------- trade
@@ -180,7 +198,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.sold += tokensOut;
 
         IERC20(token).safeTransfer(buyer, tokensOut);
-        _splitFee(c.creator, fee);
+        _splitFee(token, c.creator, fee);
         if (refund > 0) _sendEth(buyer, refund);
 
         emit Bought(token, buyer, ethIn - refund, tokensOut, fee);
@@ -212,7 +230,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.sold -= tokensIn;
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), tokensIn);
-        _splitFee(c.creator, fee);
+        _splitFee(token, c.creator, fee);
         _sendEth(msg.sender, ethToSeller);
 
         emit Sold(token, msg.sender, tokensIn, ethToSeller, fee);
@@ -273,11 +291,16 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     // ---------------------------------------------------------------- fees
 
-    /// @notice Splits a trade fee: creator share accrues for pull-withdrawal,
-    ///         the remainder goes straight to the treasury.
-    function _splitFee(address creator, uint256 fee) internal {
+    /// @notice Splits a trade fee: the creator share accrues for
+    ///         pull-withdrawal to the token's fee recipient (creator by
+    ///         default), the remainder goes straight to the treasury.
+    function _splitFee(address token, address creator, uint256 fee) internal {
         uint256 creatorCut = (fee * creatorFeeShareBps) / FEE_DENOMINATOR;
-        if (creatorCut > 0) creatorFees[creator] += creatorCut;
+        if (creatorCut > 0) {
+            address recipient = feeRecipient[token];
+            if (recipient == address(0)) recipient = creator;
+            creatorFees[recipient] += creatorCut;
+        }
         _sendEth(treasury, fee - creatorCut);
     }
 

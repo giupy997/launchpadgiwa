@@ -17,9 +17,13 @@ import { PriceChart } from "@/components/PriceChart";
 import { TradeFeed } from "@/components/TradeFeed";
 import { useTrades, pricePoints } from "@/lib/events";
 import { safeLink } from "@/lib/sanitize";
+import { LiveStream } from "@/components/LiveStream";
+import { CreatorPanel } from "@/components/CreatorPanel";
+import { useAccount } from "wagmi";
 
 export default function TokenPage({ params }: { params: { address: string } }) {
   const token = params.address as `0x${string}`;
+  const { address: user } = useAccount();
   const { data: tradeData } = useTrades(token);
   const pad = useLaunchpadAddress() ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
@@ -67,7 +71,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
   const meta =
     metaR.status === "success"
       ? parseMeta(metaR.result)
-      : { logoURI: "", website: "", twitter: "", telegram: "" };
+      : { logoURI: "", website: "", twitter: "", telegram: "", livestream: "" };
   const progress = curveProgress(curve);
 
   const links = [
@@ -115,6 +119,8 @@ export default function TokenPage({ params }: { params: { address: string } }) {
           </div>
         </div>
 
+        {meta.livestream && <LiveStream url={meta.livestream} />}
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Stat label="Price" value={`${fmtEth(spotPrice(curve), 12)} ETH`} />
           <Stat label="Raised" value={`${fmtEth(curve.realEth)} ETH`} />
@@ -142,8 +148,11 @@ export default function TokenPage({ params }: { params: { address: string } }) {
         />
       </div>
 
-      <div className="order-1 lg:order-2">
+      <div className="order-1 lg:order-2 space-y-6">
         <TradeBox token={token} symbol={symbol} graduated={curve.graduated} />
+        {user && user.toLowerCase() === curve.creator.toLowerCase() && (
+          <CreatorPanel token={token} meta={meta} />
+        )}
       </div>
     </div>
   );

@@ -35,6 +35,7 @@ export type TokenMeta = {
   website: string;
   twitter: string;
   telegram: string;
+  livestream: string;
 };
 
 export type TokenInfo = {
@@ -60,13 +61,14 @@ export function parseCurve(result: unknown): CurveInfo {
 }
 
 export function parseMeta(result: unknown): TokenMeta {
-  const [logoURI, website, twitter, telegram] = result as readonly [
+  const [logoURI, website, twitter, telegram, livestream] = result as readonly [
+    string,
     string,
     string,
     string,
     string,
   ];
-  return { logoURI, website, twitter, telegram };
+  return { logoURI, website, twitter, telegram, livestream };
 }
 
 /** Full token list with name, symbol, curve state and metadata (multicall). */

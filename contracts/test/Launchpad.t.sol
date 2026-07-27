@@ -38,7 +38,8 @@ contract LaunchpadTest is Test {
             logoURI: "https://example.com/logo.png",
             website: "https://example.com",
             twitter: "https://x.com/test",
-            telegram: "https://t.me/test"
+            telegram: "https://t.me/test",
+            livestream: ""
         });
     }
 
@@ -64,7 +65,7 @@ contract LaunchpadTest is Test {
 
     function test_metadataStoredOnCreate() public {
         address token = _create();
-        (string memory logo, string memory site,, string memory tg) = pad.tokenMetadata(token);
+        (string memory logo, string memory site,, string memory tg,) = pad.tokenMetadata(token);
         assertEq(logo, "https://example.com/logo.png");
         assertEq(site, "https://example.com");
         assertEq(tg, "https://t.me/test");
@@ -76,7 +77,7 @@ contract LaunchpadTest is Test {
         m.logoURI = "ipfs://newlogo";
         vm.prank(alice);
         pad.updateMetadata(token, m);
-        (string memory logo,,,) = pad.tokenMetadata(token);
+        (string memory logo,,,,) = pad.tokenMetadata(token);
         assertEq(logo, "ipfs://newlogo");
     }
 
@@ -134,6 +135,55 @@ contract LaunchpadTest is Test {
         vm.prank(bob);
         vm.expectRevert(Launchpad.ZeroAmount.selector);
         pad.claimCreatorFees();
+    }
+
+    function test_feeRedirectAccruesToRecipient() public {
+        address token = _create();
+        address vault = makeAddr("vault");
+        vm.prank(alice);
+        pad.setFeeRecipient(token, vault);
+
+        vm.prank(bob);
+        pad.buy{value: 1 ether}(token, 0);
+
+        assertEq(pad.creatorFees(vault), 0.006 ether);
+        assertEq(pad.creatorFees(alice), 0);
+
+        // vault can claim
+        uint256 before = vault.balance;
+        vm.prank(vault);
+        pad.claimCreatorFees();
+        assertEq(vault.balance - before, 0.006 ether);
+    }
+
+    function test_feeRedirectResetToCreator() public {
+        address token = _create();
+        address vault = makeAddr("vault");
+        vm.startPrank(alice);
+        pad.setFeeRecipient(token, vault);
+        pad.setFeeRecipient(token, address(0));
+        vm.stopPrank();
+
+        vm.prank(bob);
+        pad.buy{value: 1 ether}(token, 0);
+        assertEq(pad.creatorFees(alice), 0.006 ether);
+    }
+
+    function test_onlyCreatorSetsFeeRecipient() public {
+        address token = _create();
+        vm.prank(bob);
+        vm.expectRevert(Launchpad.NotCreator.selector);
+        pad.setFeeRecipient(token, bob);
+    }
+
+    function test_livestreamStoredInMetadata() public {
+        address token = _create();
+        Launchpad.TokenMetadata memory m = _meta();
+        m.livestream = "https://youtube.com/live/abc";
+        vm.prank(alice);
+        pad.updateMetadata(token, m);
+        (,,,, string memory live) = pad.tokenMetadata(token);
+        assertEq(live, "https://youtube.com/live/abc");
     }
 
     function test_creatorFeeShareCapAndOwner() public {
