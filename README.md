@@ -10,9 +10,10 @@ future multichain deployments (Monad, MegaETH, ...).
   - `src/Launchpad.sol` — factory + bonding curve (constant product with
     virtual reserves), graduation and DEX migration; on-chain token metadata
     (1:1 logo URI, website, X, Telegram, livestream URL) editable by the
-    creator; 1% trade fee split 60% to the token creator (pull-based
-    `claimCreatorFees`) / 40% treasury, with a per-token creator-settable
-    fee recipient (`setFeeRecipient`, pump.fun-style redirect)
+    creator; 1% trade fee split 50% creator (pull-based `claimCreatorFees`)
+    / 30% holder cashback (pro-rata accumulator, `claimCashback`) / 20%
+    treasury, with a per-token creator-settable fee recipient
+    (`setFeeRecipient`, pump.fun-style redirect)
   - `src/LaunchToken.sol` — ERC-20 created by the launchpad; transfers locked
     until graduation
   - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
@@ -52,7 +53,7 @@ future multichain deployments (Monad, MegaETH, ...).
 | Chain | Contract | Address |
 |---|---|---|
 | GIWA Sepolia (91342) | Launchpad | [`0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d`](https://sepolia-explorer.giwa.io/address/0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d) — v5 |
-| Robinhood Chain (4663) | Launchpad | [`0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85`](https://robinhoodchain.blockscout.com/address/0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85) — pre-creator-fees, redeploy pending |
+| Robinhood Chain (4663) | Launchpad | [`0xc90CD49b50D973E45Ccc6cb94413a06F55718859`](https://robinhoodchain.blockscout.com/address/0xc90CD49b50D973E45Ccc6cb94413a06F55718859) — v4, v5 redeploy pending |
 
 (previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)
 
@@ -79,7 +80,7 @@ costs real ETH, and the contracts are unaudited — trade accordingly.
 
 ```bash
 cd contracts
-forge test                       # test suite (17 tests, incl. fuzz)
+forge test                       # 33 tests incl. fuzz; fork test: RUN_FORK=true forge test --match-contract Fork
 ```
 
 ```bash
@@ -101,8 +102,8 @@ cd contracts && source .env && forge script script/Deploy.s.sol --rpc-url giwa_s
 - [ ] `IDexMigrator` adapter for a DEX on GIWA (to pick once the mainnet
       ecosystem is live)
 - [x] Trade feed + price chart from on-chain events (client-side getLogs)
-- [ ] Redeploy Robinhood Chain with creator fees and update address/deploy block
-- [ ] Verify GIWA v3 source on Blockscout (explorer API was down at deploy time)
+- [ ] Redeploy Robinhood Chain on v5 (cashback) + deploy UniV3Migrator and
+      wire it with setMigrator
 - [ ] End-to-end frontend test with a wallet (MetaMask) on GIWA Sepolia
 - [ ] Verify permissionless deploy policy on GIWA mainnet
 - [ ] Legal review (MiCA) before public launch
