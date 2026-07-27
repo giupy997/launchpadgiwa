@@ -13,9 +13,9 @@ import {
 import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
 import { TradeBox } from "@/components/TradeBox";
 import { TokenLogo } from "@/components/TokenLogo";
-import { PriceChart } from "@/components/PriceChart";
+import { CandleChart } from "@/components/CandleChart";
 import { TradeFeed } from "@/components/TradeFeed";
-import { useTrades, pricePoints } from "@/lib/events";
+import { useTrades } from "@/lib/events";
 import { safeLink } from "@/lib/sanitize";
 import { LiveStream } from "@/components/LiveStream";
 import { CreatorPanel } from "@/components/CreatorPanel";
@@ -140,7 +140,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
           </p>
         </div>
 
-        <PriceChart points={pricePoints(tradeData?.trades ?? [])} />
+        <CandleChart trades={tradeData?.trades ?? []} />
         <TradeFeed
           trades={tradeData?.trades ?? []}
           symbol={symbol}

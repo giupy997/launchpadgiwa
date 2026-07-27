@@ -96,8 +96,9 @@ export function useTrades(token: `0x${string}`) {
         }),
       ].sort((a, b) => (a.block === b.block ? 0 : a.block < b.block ? -1 : 1));
 
-      // timestamps for the last 25 trades (unique blocks, small request count)
-      const recentBlocks = [...new Set(trades.slice(-25).map((t) => t.block))];
+      // timestamps for the last 300 trades — unique blocks only, and the
+      // batched transport coalesces these into a handful of HTTP requests
+      const recentBlocks = [...new Set(trades.slice(-300).map((t) => t.block))];
       const stamps = new Map<bigint, number>();
       await Promise.all(
         recentBlocks.map(async (bn) => {

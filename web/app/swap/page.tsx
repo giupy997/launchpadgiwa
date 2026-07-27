@@ -11,16 +11,13 @@ import {
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
 import { useLaunchpadAddress, useTokens, useExplorer, useAppChain } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
-import { TokenLogo } from "@/components/TokenLogo";
 import { NotDeployedNotice } from "@/components/NotDeployedNotice";
+import { TokenPicker } from "@/components/TokenPicker";
 
 const ETH = "ETH" as const;
 const SLIPPAGE_BPS = 100n;
 type Side = typeof ETH | `0x${string}`;
 type Step = "idle" | "selling" | "buying";
-
-const selectCls =
-  "rounded-full bg-black border border-zinc-700 px-3 py-2 text-sm focus:border-white outline-none text-white";
 
 export default function SwapPage() {
   const padMaybe = useLaunchpadAddress();
@@ -171,14 +168,7 @@ export default function SwapPage() {
             From
           </label>
           <div className="flex gap-2">
-            <select value={from} onChange={(e) => setFrom(e.target.value as Side)} className={selectCls}>
-              <option value={ETH}>ETH</option>
-              {live.map((t) => (
-                <option key={t.address} value={t.address}>
-                  {t.symbol}
-                </option>
-              ))}
-            </select>
+            <TokenPicker value={from} onChange={(v) => setFrom(v)} tokens={live} />
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -216,14 +206,7 @@ export default function SwapPage() {
             To
           </label>
           <div className="flex gap-2 items-center">
-            <select value={to} onChange={(e) => setTo(e.target.value as Side)} className={selectCls}>
-              <option value={ETH}>ETH</option>
-              {live.map((t) => (
-                <option key={t.address} value={t.address}>
-                  {t.symbol}
-                </option>
-              ))}
-            </select>
+            <TokenPicker value={to} onChange={(v) => setTo(v)} tokens={live} />
             <div className="flex-1 rounded-lg border border-zinc-800 px-3 py-2 text-sm text-right text-zinc-300">
               {invalid || parsed === 0n || outQuote === undefined
                 ? "—"
@@ -289,9 +272,6 @@ export default function SwapPage() {
         </p>
       )}
 
-      <div className="flex justify-center gap-3">
-        {toToken && <TokenLogo uri={toToken.meta.logoURI} symbol={toToken.symbol} size={28} />}
-      </div>
     </div>
   );
 }
