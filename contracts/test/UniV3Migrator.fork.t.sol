@@ -43,7 +43,7 @@ contract UniV3MigratorForkTest is Test {
         vm.startPrank(whale);
         address token = pad.createToken(
             "Fork Test", "FORK", 0,
-            Launchpad.TokenMetadata("", "", "", "", "")
+            Launchpad.TokenMetadata("", "", "", "", "", "")
         );
         pad.buy{value: 50 ether}(token, 0); // crosses graduation, surplus refunded
         vm.stopPrank();
@@ -52,12 +52,7 @@ contract UniV3MigratorForkTest is Test {
         assertTrue(graduated);
         assertEq(sold, pad.CURVE_SUPPLY());
 
-        (,, uint256 raised,,,) = pad.curves(token);
-        assertGt(raised, 3.9 ether);
-
-        // anyone can migrate
-        pad.migrate(token);
-
+        // auto-migration ran inside the graduating buy
         // pool exists at the 1% tier and the position is locked in the migrator
         address pool = IUniV3FactoryView(FACTORY).getPool(token, WETH, 10_000);
         assertTrue(pool != address(0));
@@ -70,6 +65,8 @@ contract UniV3MigratorForkTest is Test {
         // launchpad kept nothing of the curve ETH for this token
         (,, uint256 realEthAfter,,,) = pad.curves(token);
         assertEq(realEthAfter, 0);
+        vm.expectRevert(Launchpad.ZeroAmount.selector);
+        pad.migrate(token); // nothing left for the manual path
 
         // collect works even with zero fees accrued
         mig.collectFees(token);

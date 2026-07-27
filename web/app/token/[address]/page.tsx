@@ -72,7 +72,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
   const meta =
     metaR.status === "success"
       ? parseMeta(metaR.result)
-      : { logoURI: "", website: "", twitter: "", telegram: "", livestream: "" };
+      : { logoURI: "", website: "", twitter: "", telegram: "", livestream: "", description: "" };
   const progress = curveProgress(curve);
 
   const links = [
@@ -102,6 +102,9 @@ export default function TokenPage({ params }: { params: { address: string } }) {
               </a>{" "}
               · creator {shortAddr(curve.creator)}
             </p>
+            {meta.description && (
+              <p className="mt-2 text-sm text-zinc-400 max-w-lg">{meta.description}</p>
+            )}
             {links.length > 0 && (
               <div className="mt-2 flex gap-2">
                 {links.map((l) => (

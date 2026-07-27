@@ -128,6 +128,19 @@ export const launchpadAbi = [
   },
   {
     "type": "function",
+    "name": "autoMigrate",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "buy",
     "inputs": [
       {
@@ -258,6 +271,11 @@ export const launchpadAbi = [
           },
           {
             "name": "livestream",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "description",
             "type": "string",
             "internalType": "string"
           }
@@ -700,6 +718,11 @@ export const launchpadAbi = [
         "name": "livestream",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -768,12 +791,30 @@ export const launchpadAbi = [
             "name": "livestream",
             "type": "string",
             "internalType": "string"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "internalType": "string"
           }
         ]
       }
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AutoMigrationFailed",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",

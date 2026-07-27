@@ -64,6 +64,7 @@ export function CreatorPanel({
           twitter: meta.twitter,
           telegram: meta.telegram,
           livestream: url.trim(),
+          description: meta.description,
         },
       ],
     });

@@ -5,16 +5,15 @@ import { NotDeployedNotice } from "@/components/NotDeployedNotice";
 
 export default function CreatePage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-5xl mx-auto">
       <NotDeployedNotice />
       <section className="text-center space-y-3 py-4">
         <h1 className="font-mono text-2xl sm:text-3xl font-bold tracking-[0.15em] uppercase">
           Create a token
         </h1>
         <p className="text-zinc-400 max-w-xl mx-auto text-sm">
-          1B total supply. 800M sold on the bonding curve, 200M reserved for DEX
-          liquidity at graduation. 1% trade fee: 50% to you, 30% back to
-          holders, 20% treasury.
+          One transaction deploys your coin, its bonding curve and — at
+          graduation — a permanently locked liquidity pool.
         </p>
       </section>
       <CreateTokenForm />

@@ -18,6 +18,12 @@ contract MockMigrator is IDexMigrator {
     }
 }
 
+contract RevertingMigrator is IDexMigrator {
+    function migrate(address, uint256) external payable {
+        revert("dex down");
+    }
+}
+
 contract LaunchpadTest is Test {
     Launchpad pad;
     MockMigrator migrator;
@@ -39,7 +45,8 @@ contract LaunchpadTest is Test {
             website: "https://example.com",
             twitter: "https://x.com/test",
             telegram: "https://t.me/test",
-            livestream: ""
+            livestream: "",
+            description: "A test coin"
         });
     }
 
@@ -65,7 +72,7 @@ contract LaunchpadTest is Test {
 
     function test_metadataStoredOnCreate() public {
         address token = _create();
-        (string memory logo, string memory site,, string memory tg,) = pad.tokenMetadata(token);
+        (string memory logo, string memory site,, string memory tg,,) = pad.tokenMetadata(token);
         assertEq(logo, "https://example.com/logo.png");
         assertEq(site, "https://example.com");
         assertEq(tg, "https://t.me/test");
@@ -77,7 +84,7 @@ contract LaunchpadTest is Test {
         m.logoURI = "ipfs://newlogo";
         vm.prank(alice);
         pad.updateMetadata(token, m);
-        (string memory logo,,,,) = pad.tokenMetadata(token);
+        (string memory logo,,,,,) = pad.tokenMetadata(token);
         assertEq(logo, "ipfs://newlogo");
     }
 
@@ -184,7 +191,7 @@ contract LaunchpadTest is Test {
         m.livestream = "https://youtube.com/live/abc";
         vm.prank(alice);
         pad.updateMetadata(token, m);
-        (,,,, string memory live) = pad.tokenMetadata(token);
+        (,,,, string memory live,) = pad.tokenMetadata(token);
         assertEq(live, "https://youtube.com/live/abc");
     }
 
@@ -355,10 +362,47 @@ contract LaunchpadTest is Test {
 
     // ------------------------------------------------------------- migration
 
+    function test_autoMigrationOnGraduation() public {
+        address token = _create();
+        _graduate(token); // graduating buy should migrate in the same tx
+        assertEq(migrator.lastToken(), token);
+        assertEq(migrator.lastTokenAmount(), pad.DEX_RESERVE());
+        (,, uint256 realEthAfter,,,) = pad.curves(token);
+        assertEq(realEthAfter, 0);
+    }
+
+    function test_gracefulWhenAutoMigrationReverts() public {
+        RevertingMigrator bad = new RevertingMigrator();
+        pad.setMigrator(address(bad));
+        address token = _create();
+        _graduate(token); // must NOT revert even though the migrator does
+
+        (,,,, bool graduated,) = pad.curves(token);
+        assertTrue(graduated);
+        (,, uint256 raised,,,) = pad.curves(token);
+        assertGt(raised, 0); // funds still parked, manual path available
+
+        pad.setMigrator(address(migrator));
+        pad.migrate(token);
+        assertEq(migrator.lastToken(), token);
+    }
+
+    function test_graduationWithoutMigratorParksFunds() public {
+        pad.setMigrator(address(0));
+        address token = _create();
+        _graduate(token);
+        (,,,, bool graduated,) = pad.curves(token);
+        assertTrue(graduated);
+        (,, uint256 raised,,,) = pad.curves(token);
+        assertGt(raised, 0);
+    }
+
     function test_migrateSendsReserveAndEth() public {
+        pad.setMigrator(address(0)); // graduate without auto-migration
         address token = _create();
         _graduate(token);
         (,, uint256 raised,,,) = pad.curves(token);
+        pad.setMigrator(address(migrator));
 
         pad.migrate(token);
 
@@ -376,8 +420,7 @@ contract LaunchpadTest is Test {
 
     function test_migrateOnlyOnce() public {
         address token = _create();
-        _graduate(token);
-        pad.migrate(token);
+        _graduate(token); // auto-migrated already
         vm.expectRevert(Launchpad.ZeroAmount.selector);
         pad.migrate(token);
     }

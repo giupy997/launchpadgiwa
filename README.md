@@ -8,7 +8,7 @@ future multichain deployments (Monad, MegaETH, ...).
 
 - `contracts/` — smart contracts (Solidity + Foundry)
   - `src/Launchpad.sol` — factory + bonding curve (constant product with
-    virtual reserves), graduation and DEX migration; on-chain token metadata
+    virtual reserves), graduation with automatic DEX migration (manual fallback if the DEX leg fails); on-chain token metadata
     (1:1 logo URI, website, X, Telegram, livestream URL) editable by the
     creator; 1% trade fee split 50% creator (pull-based `claimCreatorFees`)
     / 30% holder cashback (pro-rata accumulator, `claimCashback`) / 20%
@@ -52,7 +52,7 @@ future multichain deployments (Monad, MegaETH, ...).
 
 | Chain | Contract | Address |
 |---|---|---|
-| GIWA Sepolia (91342) | Launchpad | [`0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d`](https://sepolia-explorer.giwa.io/address/0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d) — v5 |
+| GIWA Sepolia (91342) | Launchpad | [`0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81`](https://sepolia-explorer.giwa.io/address/0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81) — v6 |
 | Robinhood Chain (4663) | Launchpad | [`0xf14987fc03d34129736B56c1E882732AA9796E34`](https://robinhoodchain.blockscout.com/address/0xf14987fc03d34129736B56c1E882732AA9796E34) — v5 |
 | Robinhood Chain (4663) | UniV3Migrator | [`0xfF103001091e299580f378c79d53d894Bd7a45CC`](https://robinhoodchain.blockscout.com/address/0xfF103001091e299580f378c79d53d894Bd7a45CC) — wired via setMigrator |
 

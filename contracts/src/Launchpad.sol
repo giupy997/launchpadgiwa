@@ -74,6 +74,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
         string twitter;
         string telegram;
         string livestream;
+        string description;
     }
 
     mapping(address token => Curve) public curves;
@@ -89,6 +90,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
     event MetadataUpdated(
         address indexed token, string logoURI, string website, string twitter, string telegram, string livestream
     );
+    event AutoMigrationFailed(address indexed token);
     event FeeRecipientUpdated(address indexed token, address indexed recipient);
     event Bought(address indexed token, address indexed buyer, uint256 ethIn, uint256 tokensOut, uint256 fee);
     event Sold(address indexed token, address indexed seller, uint256 tokensIn, uint256 ethOut, uint256 fee);
@@ -219,7 +221,23 @@ contract Launchpad is Ownable, ReentrancyGuard {
             c.graduated = true;
             LaunchToken(token).setGraduated();
             emit Graduated(token, c.realEth);
+            // Auto-migrate to the DEX in the same transaction. The external
+            // self-call isolates state: if the DEX leg reverts for any reason
+            // the graduation itself still succeeds and migrate() stays
+            // available as a manual fallback.
+            if (address(migrator) != address(0)) {
+                try this.autoMigrate(token) {}
+                catch {
+                    emit AutoMigrationFailed(token);
+                }
+            }
         }
+    }
+
+    /// @notice Self-call target for automatic graduation migration.
+    function autoMigrate(address token) external {
+        if (msg.sender != address(this)) revert NotCreator();
+        _doMigrate(token);
     }
 
     function sell(address token, uint256 tokensIn, uint256 minEthOut) external nonReentrant {
@@ -286,6 +304,10 @@ contract Launchpad is Ownable, ReentrancyGuard {
     /// @notice After graduation anyone can trigger the migration: the reserved
     ///         supply and the raised ETH are handed to the DEX adapter.
     function migrate(address token) external nonReentrant {
+        _doMigrate(token);
+    }
+
+    function _doMigrate(address token) internal {
         Curve storage c = curves[token];
         if (c.vEth == 0) revert UnknownToken();
         if (!c.graduated) revert NotYetGraduated();
