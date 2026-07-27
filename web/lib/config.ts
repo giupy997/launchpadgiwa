@@ -44,13 +44,13 @@ export const APP_CHAINS = [giwaSepolia, robinhood] as const;
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}` | undefined> = {
   [giwaSepolia.id]: "0xD74910600799db791e50BaBF3C7493AAd8A3B258",
-  [robinhood.id]: "0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85",
+  [robinhood.id]: "0x8ACf54FC1288Dd6E5B2292B1FB75c2123408cEd1",
 };
 
 // Launchpad deployment blocks: where on-chain event scans start.
 export const LAUNCHPAD_DEPLOY_BLOCK: Record<number, bigint> = {
   [giwaSepolia.id]: 31_828_882n,
-  [robinhood.id]: 20_883_133n,
+  [robinhood.id]: 20_921_974n,
 };
 
 // OP Stack standard bridge for GIWA Sepolia (on Ethereum Sepolia, L1).

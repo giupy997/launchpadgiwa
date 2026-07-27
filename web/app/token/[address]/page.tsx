@@ -16,6 +16,7 @@ import { TokenLogo } from "@/components/TokenLogo";
 import { PriceChart } from "@/components/PriceChart";
 import { TradeFeed } from "@/components/TradeFeed";
 import { useTrades, pricePoints } from "@/lib/events";
+import { safeLink } from "@/lib/sanitize";
 
 export default function TokenPage({ params }: { params: { address: string } }) {
   const token = params.address as `0x${string}`;
@@ -50,10 +51,10 @@ export default function TokenPage({ params }: { params: { address: string } }) {
   const progress = curveProgress(curve);
 
   const links = [
-    { label: "Website", href: meta.website },
-    { label: "X", href: meta.twitter },
-    { label: "Telegram", href: meta.telegram },
-  ].filter((l) => l.href);
+    { label: "Website", href: safeLink(meta.website) },
+    { label: "X", href: safeLink(meta.twitter) },
+    { label: "Telegram", href: safeLink(meta.telegram) },
+  ].filter((l): l is { label: string; href: string } => l.href !== null);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">

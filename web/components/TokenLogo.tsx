@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { safeLogo } from "@/lib/sanitize";
 
 /** Square (1:1) token logo with a monochrome fallback. */
 export function TokenLogo({
@@ -13,8 +14,9 @@ export function TokenLogo({
   size?: number;
 }) {
   const [failed, setFailed] = useState(false);
+  const src = safeLogo(uri);
 
-  if (!uri || failed) {
+  if (!src || failed) {
     return (
       <div
         style={{ width: size, height: size }}
@@ -28,7 +30,7 @@ export function TokenLogo({
   return (
     // eslint-disable-next-line @next/next/no-img-element -- arbitrary external hosts
     <img
-      src={uri}
+      src={src}
       alt={symbol}
       width={size}
       height={size}

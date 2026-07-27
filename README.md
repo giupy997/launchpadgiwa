@@ -1,4 +1,4 @@
-# HOLO Launchpad
+# Notus
 
 Pump.fun-style launchpad for launching tokens on EVM chains. Primary target:
 **GIWA** (Upbit/Dunamu's OP Stack L2), with a chain-agnostic architecture for

@@ -22,7 +22,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "HOLO Launchpad — launch tokens on GIWA",
+  title: "Notus — multichain token launchpad",
   description: "Launch your token on the bonding curve. GIWA Sepolia testnet.",
 };
 
@@ -42,7 +42,7 @@ export default function RootLayout({
                 href="/"
                 className="font-mono text-lg font-bold tracking-[0.25em] uppercase shrink-0"
               >
-                HOLO
+                NOTUS
               </Link>
               <Nav />
               <div className="flex items-center gap-2 shrink-0">
@@ -54,7 +54,7 @@ export default function RootLayout({
           <main className="mx-auto max-w-5xl px-4 py-10">{children}</main>
           <footer className="border-t border-zinc-900">
             <div className="mx-auto max-w-5xl px-4 py-8 text-xs text-zinc-600 font-mono tracking-wide">
-              HOLO LAUNCHPAD · MULTICHAIN ·{" "}
+              NOTUS · MULTICHAIN ·{" "}
               <a
                 className="underline hover:text-zinc-300"
                 href="https://github.com/giupy997/launchpadgiwa"

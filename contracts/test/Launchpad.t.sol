@@ -290,6 +290,30 @@ contract LaunchpadTest is Test {
 
     // ------------------------------------------------------------- fuzz
 
+    /// Regression: buys that cross graduation must never revert on the
+    /// refund math, whatever the rounding of the fee gross-up.
+    function testFuzz_graduatingBuyNeverReverts(uint96 extra) public {
+        extra = uint96(bound(extra, 0, 2 ether));
+        address token = _create();
+
+        // bring the curve close to graduation
+        vm.prank(bob);
+        pad.buy{value: 4 ether}(token, 0);
+        (,,, uint256 sold, bool grad,) = pad.curves(token);
+        if (!grad) {
+            // ETH needed to finish the curve, then cross it with a fuzzed surplus
+            uint256 remaining = pad.CURVE_SUPPLY() - sold;
+            (uint256 vEth, uint256 vToken,,,,) = pad.curves(token);
+            uint256 ethNeeded = (vEth * vToken) / (vToken - remaining) - vEth + 1;
+            uint256 gross = (ethNeeded * 10_000) / 9_900 + uint256(extra);
+            vm.deal(bob, gross);
+            vm.prank(bob);
+            pad.buy{value: gross}(token, 0);
+        }
+        (,,,, grad,) = pad.curves(token);
+        assertTrue(grad);
+    }
+
     function testFuzz_buySellNeverProfits(uint96 ethIn) public {
         ethIn = uint96(bound(ethIn, 0.001 ether, 3 ether));
         address token = _create();

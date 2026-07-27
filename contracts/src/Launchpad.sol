@@ -166,7 +166,10 @@ contract Launchpad is Ownable, ReentrancyGuard {
                 ethForCurve = ethNeeded;
             }
             fee = (ethForCurve * feeBps) / (FEE_DENOMINATOR - feeBps); // fee on the used part
-            refund = ethIn - ethForCurve - fee;
+            // Rounding in the fee gross-up can exceed ethIn by a wei: saturate
+            // instead of underflowing, so the graduating buy can never revert here.
+            uint256 total = ethForCurve + fee;
+            refund = ethIn > total ? ethIn - total : 0;
         }
         if (tokensOut == 0) revert ZeroAmount();
         if (tokensOut < minTokensOut) revert Slippage();
