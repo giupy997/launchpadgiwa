@@ -10,40 +10,46 @@ import { launchpadAbi } from "@/lib/abi";
 import { useLaunchpadAddress, useAppChain } from "@/lib/hooks";
 import { fmtEth } from "@/lib/format";
 
-/** Accrued creator fee earnings (50% of trade fees) with a claim button.
- *  Renders nothing on chains whose deployment predates creator fees. */
-export function CreatorFees() {
+/** Holder cashback (30% of trade fees, pro-rata) for the connected wallet.
+ *  Renders nothing on deployments that predate the cashback system. */
+export function CashbackCard({ token }: { token: `0x${string}` }) {
   const pad = useLaunchpadAddress();
   const appChainId = useAppChain().id;
   const { address: user } = useAccount();
 
-  const { data: accrued, isError } = useReadContract({
+  const { data: claimable, isError } = useReadContract({
     address: pad,
     abi: launchpadAbi,
-    functionName: "creatorFees",
-    args: user ? [user] : undefined,
+    functionName: "cashbackOf",
+    args: user ? [token, user] : undefined,
     query: { enabled: !!pad && !!user, refetchInterval: 10_000 },
   });
 
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  if (!pad || !user || isError || accrued === undefined) return null;
+  if (!pad || !user || isError || claimable === undefined) return null;
 
-  const amount = accrued as bigint;
+  const amount = claimable as bigint;
 
   return (
-    <div className="rounded-xl border border-zinc-800 px-5 py-3">
+    <div className="rounded-xl border border-zinc-800 bg-black p-5">
       <div className="font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-        Creator earnings
+        Holder cashback
       </div>
-      <div className="mt-0.5 flex items-center gap-3">
+      <div className="mt-1 flex items-center gap-3">
         <span className="font-semibold">{fmtEth(amount)} ETH</span>
         {amount > 0n && (
           <button
             onClick={() => {
               reset();
-              writeContract({ address: pad, abi: launchpadAbi, functionName: "claimCreatorFees", chainId: appChainId });
+              writeContract({
+                address: pad,
+                abi: launchpadAbi,
+                functionName: "claimCashback",
+                chainId: appChainId,
+                args: [token],
+              });
             }}
             disabled={isPending || isConfirming}
             className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black hover:bg-zinc-200 disabled:opacity-40"
@@ -53,12 +59,14 @@ export function CreatorFees() {
         )}
         {isSuccess && <span className="text-xs text-zinc-400">claimed ✓</span>}
       </div>
+      <p className="mt-1 text-[11px] text-zinc-600">
+        30% of every trade fee is shared pro-rata with holders.
+      </p>
       {error && (
         <p className="mt-1 text-xs text-zinc-500 break-all">
           {(error as { shortMessage?: string }).shortMessage ?? error.message}
         </p>
       )}
-      <p className="mt-1 text-[11px] text-zinc-600">50% of the 1% trade fee on your tokens.</p>
     </div>
   );
 }

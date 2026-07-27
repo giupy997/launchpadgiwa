@@ -11,8 +11,7 @@ import {
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
 import { useLaunchpadAddress, useExplorer, useAppChain } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
-
-const SLIPPAGE_BPS = 100n; // 1% tolerance on the quote
+import { SlippageControl, useSlippageBps } from "@/components/SlippageControl";
 
 export function TradeBox({
   token,
@@ -30,6 +29,7 @@ export function TradeBox({
   const appChainId = useAppChain().id;
   const { address: user, isConnected } = useAccount();
   const [mode, setMode] = useState<"buy" | "sell">("buy");
+  const [slippageBps, setSlippageBps] = useSlippageBps();
   const [amount, setAmount] = useState("");
 
   const parsed = safeParse(amount);
@@ -73,7 +73,7 @@ export function TradeBox({
     mode === "sell" && parsed > 0n && (allowance === undefined || (allowance as bigint) < parsed);
 
   function withSlippage(quote: bigint): bigint {
-    return quote - (quote * SLIPPAGE_BPS) / 10_000n;
+    return quote - (quote * BigInt(slippageBps)) / 10_000n;
   }
 
   function submit(e: React.FormEvent) {
@@ -185,7 +185,8 @@ export function TradeBox({
         </button>
       </form>
 
-      <p className="text-xs text-zinc-600">1% fee · max 1% slippage on quote</p>
+      <SlippageControl bps={slippageBps} onChange={setSlippageBps} />
+      <p className="text-xs text-zinc-600">1% fee · 50% creator · 30% holders · 20% treasury</p>
 
       {isSuccess && hash && (
         <p className="text-sm text-zinc-300">

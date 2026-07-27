@@ -98,9 +98,11 @@ contract LaunchpadTest is Test {
         pad.buy{value: 1 ether}(token, quoted);
 
         assertEq(LaunchToken(token).balanceOf(bob), quoted);
-        // 1% fee: 60% accrues to the creator (alice), 40% to treasury
-        assertEq(treasury.balance, 0.004 ether);
-        assertEq(pad.creatorFees(alice), 0.006 ether);
+        // 1% fee: 50% creator (alice), 30% holder cashback, 20% treasury
+        assertEq(treasury.balance, 0.002 ether);
+        assertEq(pad.creatorFees(alice), 0.005 ether);
+        // bob is the only holder, so the whole cashback accrues to him
+        assertApproxEqAbs(pad.cashbackOf(token, bob), 0.003 ether, 1e12);
         (,, uint256 realEth,,,) = pad.curves(token);
         assertEq(realEth, 0.99 ether);
     }
@@ -114,7 +116,7 @@ contract LaunchpadTest is Test {
         pad.sell(token, bal, 0);
         vm.stopPrank();
         // fees from both legs accrued to alice, none lost
-        assertGt(pad.creatorFees(alice), 0.006 ether); // buy fee + sell fee
+        assertGt(pad.creatorFees(alice), 0.005 ether); // buy fee + sell fee
     }
 
     function test_claimCreatorFees() public {
@@ -146,14 +148,14 @@ contract LaunchpadTest is Test {
         vm.prank(bob);
         pad.buy{value: 1 ether}(token, 0);
 
-        assertEq(pad.creatorFees(vault), 0.006 ether);
+        assertEq(pad.creatorFees(vault), 0.005 ether);
         assertEq(pad.creatorFees(alice), 0);
 
         // vault can claim
         uint256 before = vault.balance;
         vm.prank(vault);
         pad.claimCreatorFees();
-        assertEq(vault.balance - before, 0.006 ether);
+        assertEq(vault.balance - before, 0.005 ether);
     }
 
     function test_feeRedirectResetToCreator() public {
@@ -166,7 +168,7 @@ contract LaunchpadTest is Test {
 
         vm.prank(bob);
         pad.buy{value: 1 ether}(token, 0);
-        assertEq(pad.creatorFees(alice), 0.006 ether);
+        assertEq(pad.creatorFees(alice), 0.005 ether);
     }
 
     function test_onlyCreatorSetsFeeRecipient() public {
@@ -186,14 +188,69 @@ contract LaunchpadTest is Test {
         assertEq(live, "https://youtube.com/live/abc");
     }
 
-    function test_creatorFeeShareCapAndOwner() public {
+    function test_feeSplitCapAndOwner() public {
         vm.expectRevert(Launchpad.FeeTooHigh.selector);
-        pad.setCreatorFeeShareBps(10_001);
-        pad.setCreatorFeeShareBps(5_000);
-        assertEq(pad.creatorFeeShareBps(), 5_000);
+        pad.setFeeSplit(8_000, 3_000); // sum > 100%
+        pad.setFeeSplit(4_000, 4_000);
+        assertEq(pad.creatorFeeShareBps(), 4_000);
+        assertEq(pad.holderCashbackBps(), 4_000);
         vm.prank(alice);
         vm.expectRevert();
-        pad.setCreatorFeeShareBps(1_000);
+        pad.setFeeSplit(1_000, 1_000);
+    }
+
+    // ------------------------------------------------------------- cashback
+
+    function test_cashbackClaim() public {
+        address token = _create();
+        vm.prank(bob);
+        pad.buy{value: 1 ether}(token, 0);
+
+        uint256 claimable = pad.cashbackOf(token, bob);
+        assertApproxEqAbs(claimable, 0.003 ether, 1e12);
+
+        uint256 before = bob.balance;
+        vm.prank(bob);
+        pad.claimCashback(token);
+        assertEq(bob.balance - before, claimable);
+        assertEq(pad.cashbackOf(token, bob), 0);
+
+        vm.prank(bob);
+        vm.expectRevert(Launchpad.ZeroAmount.selector);
+        pad.claimCashback(token);
+    }
+
+    function test_cashbackProRataAcrossHolders() public {
+        address token = _create();
+        vm.prank(bob);
+        pad.buy{value: 1 ether}(token, 0); // bob sole holder gets buy1 cashback
+
+        address carol = makeAddr("carol");
+        vm.deal(carol, 10 ether);
+        vm.prank(carol);
+        pad.buy{value: 1 ether}(token, 0); // buy2 cashback split pro-rata
+
+        uint256 bobCb = pad.cashbackOf(token, bob);
+        uint256 carolCb = pad.cashbackOf(token, carol);
+        // bob: all of buy1 (0.003) + his share of buy2; carol: only her share of buy2
+        assertGt(bobCb, 0.003 ether);
+        assertGt(carolCb, 0);
+        assertLt(carolCb, bobCb);
+        // total distributed cashback matches 30% of both fees (0.006) within dust
+        assertApproxEqAbs(bobCb + carolCb, 0.006 ether, 1e12);
+    }
+
+    function test_cashbackSurvivesPostGraduationTransfers() public {
+        address token = _create();
+        _graduate(token);
+        uint256 before = pad.cashbackOf(token, bob);
+        assertGt(before, 0);
+
+        // post-graduation transfer must not inflate the recipient's cashback
+        vm.prank(bob);
+        LaunchToken(token).transfer(alice, 100_000_000e18);
+        assertEq(pad.cashbackOf(token, alice), 0);
+        assertApproxEqAbs(pad.cashbackOf(token, bob), before, 1e12);
     }
 
     function test_priceIncreasesWithBuys() public {

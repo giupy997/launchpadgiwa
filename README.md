@@ -16,6 +16,10 @@ future multichain deployments (Monad, MegaETH, ...).
   - `src/LaunchToken.sol` — ERC-20 created by the launchpad; transfers locked
     until graduation
   - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
+  - `src/UniV3Migrator.sol` — graduation adapter for Robinhood Chain: seeds a
+    full-range Uniswap v3 pool (1% tier), locks the LP NFT forever and splits
+    the perpetual LP fees 50/50 creator/treasury (fork-tested against the
+    live Uniswap deployment)
 - `web/` — Next.js 14 + wagmi v2 + viem frontend
   - `/` Explore: on-chain token list (multicall, 5s refresh) with search
     and sorting
@@ -47,7 +51,7 @@ future multichain deployments (Monad, MegaETH, ...).
 
 | Chain | Contract | Address |
 |---|---|---|
-| GIWA Sepolia (91342) | Launchpad | [`0xF066f4E454d1A06829eA836197eEf7dedACA7dfe`](https://sepolia-explorer.giwa.io/address/0xF066f4E454d1A06829eA836197eEf7dedACA7dfe) |
+| GIWA Sepolia (91342) | Launchpad | [`0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d`](https://sepolia-explorer.giwa.io/address/0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d) — v5 |
 | Robinhood Chain (4663) | Launchpad | [`0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85`](https://robinhoodchain.blockscout.com/address/0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85) — pre-creator-fees, redeploy pending |
 
 (previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)

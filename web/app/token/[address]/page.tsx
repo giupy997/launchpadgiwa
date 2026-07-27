@@ -13,12 +13,13 @@ import {
 import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
 import { TradeBox } from "@/components/TradeBox";
 import { TokenLogo } from "@/components/TokenLogo";
-import { CandleChart } from "@/components/CandleChart";
+import { PriceChart } from "@/components/PriceChart";
 import { TradeFeed } from "@/components/TradeFeed";
-import { useTrades } from "@/lib/events";
+import { useTrades, pricePoints } from "@/lib/events";
 import { safeLink } from "@/lib/sanitize";
 import { LiveStream } from "@/components/LiveStream";
 import { CreatorPanel } from "@/components/CreatorPanel";
+import { CashbackCard } from "@/components/CashbackCard";
 import { useAccount } from "wagmi";
 
 export default function TokenPage({ params }: { params: { address: string } }) {
@@ -140,7 +141,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
           </p>
         </div>
 
-        <CandleChart trades={tradeData?.trades ?? []} />
+        <PriceChart points={pricePoints(tradeData?.trades ?? [])} />
         <TradeFeed
           trades={tradeData?.trades ?? []}
           symbol={symbol}
@@ -150,6 +151,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
 
       <div className="order-1 lg:order-2 space-y-6">
         <TradeBox token={token} symbol={symbol} graduated={curve.graduated} />
+        <CashbackCard token={token} />
         {user && user.toLowerCase() === curve.creator.toLowerCase() && (
           <CreatorPanel token={token} meta={meta} />
         )}

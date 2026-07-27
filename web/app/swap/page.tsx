@@ -12,10 +12,10 @@ import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
 import { useLaunchpadAddress, useTokens, useExplorer, useAppChain } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
 import { NotDeployedNotice } from "@/components/NotDeployedNotice";
+import { SlippageControl, useSlippageBps } from "@/components/SlippageControl";
 import { TokenPicker } from "@/components/TokenPicker";
 
 const ETH = "ETH" as const;
-const SLIPPAGE_BPS = 100n;
 type Side = typeof ETH | `0x${string}`;
 type Step = "idle" | "selling" | "buying";
 
@@ -33,6 +33,7 @@ export default function SwapPage() {
   const [to, setTo] = useState<Side>(ETH);
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<Step>("idle");
+  const [slippageBps, setSlippageBps] = useSlippageBps();
 
   // default "to" once tokens load
   useEffect(() => {
@@ -108,7 +109,7 @@ export default function SwapPage() {
   }, [step, isSuccess]);
 
   function minOut(quote: bigint): bigint {
-    return quote - (quote * SLIPPAGE_BPS) / 10_000n;
+    return quote - (quote * BigInt(slippageBps)) / 10_000n;
   }
 
   function submit(e: React.FormEvent) {
@@ -247,9 +248,10 @@ export default function SwapPage() {
                         : "Swap"}
         </button>
 
-        <p className="text-xs text-zinc-600 text-center">
-          1% curve fee per leg · max 1% slippage
-        </p>
+        <div className="flex justify-center">
+          <SlippageControl bps={slippageBps} onChange={setSlippageBps} />
+        </div>
+        <p className="text-xs text-zinc-600 text-center">1% curve fee per leg</p>
 
         {isSuccess && hash && step === "idle" && (
           <p className="text-sm text-zinc-300 text-center">

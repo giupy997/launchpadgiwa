@@ -13,7 +13,8 @@ export default function CreatePage() {
         </h1>
         <p className="text-zinc-400 max-w-xl mx-auto text-sm">
           1B total supply. 800M sold on the bonding curve, 200M reserved for DEX
-          liquidity at graduation. 1% fee on trades.
+          liquidity at graduation. 1% trade fee: 50% to you, 30% back to
+          holders, 20% treasury.
         </p>
       </section>
       <CreateTokenForm />

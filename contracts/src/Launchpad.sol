@@ -35,14 +35,24 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     uint256 public constant FEE_DENOMINATOR = 10_000;
     uint256 public feeBps = 100; // 1% on buys and sells
-    /// Share of each fee that accrues to the token's creator (60%); the rest
-    /// goes to the treasury. Creators withdraw with claimCreatorFees()
-    /// (pull-based, so a misbehaving creator address can never block trades).
-    uint256 public creatorFeeShareBps = 6_000;
+    /// Fee split: creator share + holder cashback share; the remainder goes
+    /// to the treasury. Creator fees and cashback are pull-based (claim
+    /// functions), so no external address can ever block trades.
+    uint256 public creatorFeeShareBps = 5_000; // 50% to the token creator
+    uint256 public holderCashbackBps = 3_000; //  30% back to token holders
     address public treasury;
     IDexMigrator public migrator;
 
     mapping(address creator => uint256) public creatorFees;
+
+    /// Holder cashback: a per-token rewards accumulator (1e18 precision).
+    /// Every balance change settles the affected wallets via the token's
+    /// transfer hook, so pro-rata accounting stays exact even after
+    /// graduation when transfers are free.
+    uint256 private constant ACC_PRECISION = 1e18;
+    mapping(address token => uint256) public accCashbackPerShare;
+    mapping(address token => mapping(address holder => uint256)) public pendingCashback;
+    mapping(address token => mapping(address holder => uint256)) public cashbackDebt;
 
     // ---------------------------------------------------------------- state
 
@@ -87,6 +97,8 @@ contract Launchpad is Ownable, ReentrancyGuard {
     event FeeUpdated(uint256 feeBps);
     event CreatorFeeShareUpdated(uint256 creatorFeeShareBps);
     event CreatorFeesClaimed(address indexed creator, uint256 amount);
+    event CashbackClaimed(address indexed token, address indexed holder, uint256 amount);
+    event FeeSplitUpdated(uint256 creatorFeeShareBps, uint256 holderCashbackBps);
     event TreasuryUpdated(address treasury);
     event MigratorUpdated(address migrator);
 
@@ -291,9 +303,8 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     // ---------------------------------------------------------------- fees
 
-    /// @notice Splits a trade fee: the creator share accrues for
-    ///         pull-withdrawal to the token's fee recipient (creator by
-    ///         default), the remainder goes straight to the treasury.
+    /// @notice Splits a trade fee: creator share and holder cashback accrue
+    ///         for pull-withdrawal, the remainder goes straight to the treasury.
     function _splitFee(address token, address creator, uint256 fee) internal {
         uint256 creatorCut = (fee * creatorFeeShareBps) / FEE_DENOMINATOR;
         if (creatorCut > 0) {
@@ -301,7 +312,59 @@ contract Launchpad is Ownable, ReentrancyGuard {
             if (recipient == address(0)) recipient = creator;
             creatorFees[recipient] += creatorCut;
         }
-        _sendEth(treasury, fee - creatorCut);
+        uint256 cashbackCut = (fee * holderCashbackBps) / FEE_DENOMINATOR;
+        uint256 sold = curves[token].sold;
+        if (cashbackCut > 0 && sold > 0) {
+            accCashbackPerShare[token] += (cashbackCut * ACC_PRECISION) / sold;
+        } else {
+            // no holders yet: fold the cashback into the treasury share
+            cashbackCut = 0;
+        }
+        _sendEth(treasury, fee - creatorCut - cashbackCut);
+    }
+
+    /// @notice Transfer hook called by LaunchTokens right after every balance
+    ///         change: harvests each wallet's accrual at its pre-transfer
+    ///         balance and re-anchors its debt at the new balance, so cashback
+    ///         stays pro-rata forever. Unknown callers only touch their own
+    ///         isolated storage keys and can never mint claims (their
+    ///         accumulator is always zero).
+    function onTokenTransfer(address from, address to, uint256 value) external {
+        address token = msg.sender;
+        if (from != address(0) && from != address(this)) {
+            uint256 newBal = IERC20(token).balanceOf(from);
+            _settleCashback(token, from, newBal + value, newBal);
+        }
+        if (to != address(0) && to != address(this)) {
+            uint256 newBal = IERC20(token).balanceOf(to);
+            _settleCashback(token, to, newBal - value, newBal);
+        }
+    }
+
+    function _settleCashback(address token, address holder, uint256 oldBal, uint256 newBal) internal {
+        uint256 acc = accCashbackPerShare[token];
+        uint256 debt = cashbackDebt[token][holder];
+        uint256 earned = (oldBal * acc) / ACC_PRECISION;
+        if (earned > debt) pendingCashback[token][holder] += earned - debt;
+        cashbackDebt[token][holder] = (newBal * acc) / ACC_PRECISION;
+    }
+
+    /// @notice Live claimable cashback for a holder of `token`.
+    function cashbackOf(address token, address holder) external view returns (uint256) {
+        uint256 entitled = (IERC20(token).balanceOf(holder) * accCashbackPerShare[token]) / ACC_PRECISION;
+        uint256 debt = cashbackDebt[token][holder];
+        return pendingCashback[token][holder] + (entitled > debt ? entitled - debt : 0);
+    }
+
+    /// @notice Withdraw the trade-fee cashback earned by holding `token`.
+    function claimCashback(address token) external nonReentrant {
+        uint256 bal = IERC20(token).balanceOf(msg.sender);
+        _settleCashback(token, msg.sender, bal, bal);
+        uint256 amount = pendingCashback[token][msg.sender];
+        if (amount == 0) revert ZeroAmount();
+        pendingCashback[token][msg.sender] = 0;
+        _sendEth(msg.sender, amount);
+        emit CashbackClaimed(token, msg.sender, amount);
     }
 
     /// @notice Withdraw the fees accrued by all tokens you created.
@@ -321,10 +384,11 @@ contract Launchpad is Ownable, ReentrancyGuard {
         emit FeeUpdated(newFeeBps);
     }
 
-    function setCreatorFeeShareBps(uint256 newShareBps) external onlyOwner {
-        if (newShareBps > FEE_DENOMINATOR) revert FeeTooHigh();
-        creatorFeeShareBps = newShareBps;
-        emit CreatorFeeShareUpdated(newShareBps);
+    function setFeeSplit(uint256 newCreatorBps, uint256 newCashbackBps) external onlyOwner {
+        if (newCreatorBps + newCashbackBps > FEE_DENOMINATOR) revert FeeTooHigh();
+        creatorFeeShareBps = newCreatorBps;
+        holderCashbackBps = newCashbackBps;
+        emit FeeSplitUpdated(newCreatorBps, newCashbackBps);
     }
 
     function setTreasury(address newTreasury) external onlyOwner {

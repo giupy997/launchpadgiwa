@@ -3,11 +3,17 @@ pragma solidity ^0.8.24;
 
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
+interface ILaunchpadHook {
+    function onTokenTransfer(address from, address to, uint256 value) external;
+}
+
 /// @title LaunchToken
 /// @notice ERC-20 created by the Launchpad. The full supply is minted to the
 ///         launchpad, which sells it along a bonding curve. Transfers between
 ///         third parties are blocked until the token graduates, so liquidity
-///         cannot be moved to a DEX before the curve completes.
+///         cannot be moved to a DEX before the curve completes. Every balance
+///         change notifies the launchpad so holder-cashback accounting stays
+///         exact (the hook is pure storage math and never reverts transfers).
 contract LaunchToken is ERC20 {
     address public immutable launchpad;
     bool public graduated;
@@ -32,5 +38,7 @@ contract LaunchToken is ERC20 {
             revert NotGraduated();
         }
         super._update(from, to, value);
+        // Settle cashback for both wallets right after balances change.
+        ILaunchpadHook(launchpad).onTokenTransfer(from, to, value);
     }
 }
