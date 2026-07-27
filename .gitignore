@@ -1,0 +1,15 @@
+# Env / secrets
+.env
+*.env
+
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+
+# Node (future frontend)
+node_modules/
+.next/
+
+# OS
+.DS_Store
