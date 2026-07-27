@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
+import { cookieToInitialState } from "wagmi";
 import "./globals.css";
+import { config } from "@/lib/config";
 import { Providers } from "./providers";
 import { ConnectButton } from "@/components/ConnectButton";
 import { ChainSwitcher } from "@/components/ChainSwitcher";
@@ -26,12 +29,13 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const initialState = cookieToInitialState(config, headers().get("cookie"));
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-black text-white min-h-screen`}
       >
-        <Providers>
+        <Providers initialState={initialState}>
           <header className="border-b border-zinc-800 sticky top-0 bg-black/90 backdrop-blur z-10">
             <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between gap-4">
               <Link

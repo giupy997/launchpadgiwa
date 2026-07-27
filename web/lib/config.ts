@@ -1,6 +1,6 @@
 import { defineChain } from "viem";
 import { mainnet, sepolia } from "viem/chains";
-import { createConfig, http, injected } from "wagmi";
+import { cookieStorage, createConfig, createStorage, http, injected } from "wagmi";
 
 export const giwaSepolia = defineChain({
   id: 91342,
@@ -53,6 +53,10 @@ export const L1_STANDARD_BRIDGE: `0x${string}` =
   "0x77b2ffc0F57598cAe1DB76cb398059cF5d10A7E7";
 
 export const config = createConfig({
+  // Cookie-backed state + ssr: the server renders with the persisted chain,
+  // so selection survives reloads without hydration mismatches.
+  ssr: true,
+  storage: createStorage({ storage: cookieStorage }),
   chains: [giwaSepolia, robinhood, sepolia, mainnet],
   connectors: [injected()],
   transports: {
