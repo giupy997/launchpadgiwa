@@ -53,7 +53,7 @@ future multichain deployments (Monad, MegaETH, ...).
 | Chain | Contract | Address |
 |---|---|---|
 | GIWA Sepolia (91342) | Launchpad | [`0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d`](https://sepolia-explorer.giwa.io/address/0x54028aaCd936C0Ae8559d76BB0CFBcd832b44a3d) — v5 |
-| Robinhood Chain (4663) | Launchpad | [`0xc90CD49b50D973E45Ccc6cb94413a06F55718859`](https://robinhoodchain.blockscout.com/address/0xc90CD49b50D973E45Ccc6cb94413a06F55718859) — v4, v5 redeploy pending |
+| Robinhood Chain (4663) | Launchpad | [`0xf14987fc03d34129736B56c1E882732AA9796E34`](https://robinhoodchain.blockscout.com/address/0xf14987fc03d34129736B56c1E882732AA9796E34) — v5 |
 
 (previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)
 
