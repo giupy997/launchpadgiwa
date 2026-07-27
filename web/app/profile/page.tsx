@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useAccount, useBalance, useReadContracts } from "wagmi";
 import { launchTokenAbi } from "@/lib/abi";
-import { useTokens, spotPrice } from "@/lib/hooks";
+import { useTokens, spotPrice, useExplorer } from "@/lib/hooks";
 import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
-import { EXPLORER } from "@/lib/config";
 import { TokenCard } from "@/components/TokenCard";
 import { TokenLogo } from "@/components/TokenLogo";
 
 export default function ProfilePage() {
   const { address: user, isConnected } = useAccount();
   const { tokens } = useTokens();
+  const explorer = useExplorer();
   const { data: ethBal } = useBalance({ address: user, query: { enabled: !!user } });
 
   const { data: balances } = useReadContracts({
@@ -54,7 +54,7 @@ export default function ProfilePage() {
         <div>
           <h1 className="font-mono text-2xl font-bold tracking-[0.15em] uppercase">Profile</h1>
           <p className="mt-1 font-mono text-sm text-zinc-400">
-            <a href={`${EXPLORER}/address/${user}`} target="_blank" className="underline">
+            <a href={`${explorer}/address/${user}`} target="_blank" className="underline">
               {shortAddr(user)}
             </a>
           </p>

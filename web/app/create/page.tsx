@@ -1,10 +1,12 @@
 "use client";
 
 import { CreateTokenForm } from "@/components/CreateTokenForm";
+import { NotDeployedNotice } from "@/components/NotDeployedNotice";
 
 export default function CreatePage() {
   return (
     <div className="space-y-8">
+      <NotDeployedNotice />
       <section className="text-center space-y-3 py-4">
         <h1 className="font-mono text-2xl sm:text-3xl font-bold tracking-[0.15em] uppercase">
           Create a token

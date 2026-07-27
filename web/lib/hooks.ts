@@ -3,11 +3,22 @@
 import { useMemo } from "react";
 import { useChainId, useReadContract, useReadContracts } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "./abi";
-import { giwaSepolia, LAUNCHPAD_ADDRESS } from "./config";
+import { APP_CHAINS, giwaSepolia, LAUNCHPAD_ADDRESS } from "./config";
 
-export function useLaunchpadAddress() {
+/** The app chain currently selected (falls back to GIWA Sepolia). */
+export function useAppChain() {
   const chainId = useChainId();
-  return LAUNCHPAD_ADDRESS[chainId] ?? LAUNCHPAD_ADDRESS[giwaSepolia.id];
+  return APP_CHAINS.find((c) => c.id === chainId) ?? giwaSepolia;
+}
+
+/** Block explorer base URL for the current app chain. */
+export function useExplorer() {
+  return useAppChain().blockExplorers.default.url;
+}
+
+/** Launchpad address on the current app chain; undefined if not deployed yet. */
+export function useLaunchpadAddress(): `0x${string}` | undefined {
+  return LAUNCHPAD_ADDRESS[useAppChain().id];
 }
 
 export type CurveInfo = {
@@ -66,14 +77,15 @@ export function useTokens() {
     address: pad,
     abi: launchpadAbi,
     functionName: "tokenCount",
-    query: REFETCH,
+    query: { ...REFETCH, enabled: !!pad },
   });
 
-  const n = Number(count ?? 0n);
+  const n = pad ? Number(count ?? 0n) : 0;
+  const padSafe = (pad ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
 
   const { data: addrs } = useReadContracts({
     contracts: Array.from({ length: n }, (_, i) => ({
-      address: pad,
+      address: padSafe,
       abi: launchpadAbi,
       functionName: "allTokens" as const,
       args: [BigInt(i)] as const,
@@ -93,8 +105,8 @@ export function useTokens() {
     contracts: tokenAddrs.flatMap((t) => [
       { address: t, abi: launchTokenAbi, functionName: "name" as const },
       { address: t, abi: launchTokenAbi, functionName: "symbol" as const },
-      { address: pad, abi: launchpadAbi, functionName: "curves" as const, args: [t] as const },
-      { address: pad, abi: launchpadAbi, functionName: "tokenMetadata" as const, args: [t] as const },
+      { address: padSafe, abi: launchpadAbi, functionName: "curves" as const, args: [t] as const },
+      { address: padSafe, abi: launchpadAbi, functionName: "tokenMetadata" as const, args: [t] as const },
     ]),
     query: { enabled: tokenAddrs.length > 0, ...REFETCH },
   });

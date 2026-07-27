@@ -8,15 +8,16 @@ import {
   spotPrice,
   parseCurve,
   parseMeta,
+  useExplorer,
 } from "@/lib/hooks";
 import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
-import { EXPLORER } from "@/lib/config";
 import { TradeBox } from "@/components/TradeBox";
 import { TokenLogo } from "@/components/TokenLogo";
 
 export default function TokenPage({ params }: { params: { address: string } }) {
   const token = params.address as `0x${string}`;
-  const pad = useLaunchpadAddress();
+  const pad = useLaunchpadAddress() ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
+  const explorer = useExplorer();
 
   const { data, isLoading } = useReadContracts({
     contracts: [
@@ -66,7 +67,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
               )}
             </h1>
             <p className="mt-1 text-sm text-zinc-500">
-              <a href={`${EXPLORER}/address/${token}`} target="_blank" className="underline">
+              <a href={`${explorer}/address/${token}`} target="_blank" className="underline">
                 {shortAddr(token)}
               </a>{" "}
               · creator {shortAddr(curve.creator)}

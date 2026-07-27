@@ -9,10 +9,10 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useTokens } from "@/lib/hooks";
+import { useLaunchpadAddress, useTokens, useExplorer } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
-import { EXPLORER } from "@/lib/config";
 import { TokenLogo } from "@/components/TokenLogo";
+import { NotDeployedNotice } from "@/components/NotDeployedNotice";
 
 const ETH = "ETH" as const;
 const SLIPPAGE_BPS = 100n;
@@ -23,7 +23,10 @@ const selectCls =
   "rounded-full bg-black border border-zinc-700 px-3 py-2 text-sm focus:border-white outline-none text-white";
 
 export default function SwapPage() {
-  const pad = useLaunchpadAddress();
+  const padMaybe = useLaunchpadAddress();
+  const deployed = !!padMaybe;
+  const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
+  const explorer = useExplorer();
   const { address: user, isConnected } = useAccount();
   const { tokens } = useTokens();
   const live = tokens.filter((t) => !t.curve.graduated);
@@ -152,6 +155,7 @@ export default function SwapPage() {
 
   return (
     <div className="max-w-md mx-auto space-y-6">
+      <NotDeployedNotice />
       <h1 className="font-mono text-2xl font-bold tracking-[0.15em] uppercase text-center py-2">
         Swap
       </h1>
@@ -233,10 +237,12 @@ export default function SwapPage() {
 
         <button
           type="submit"
-          disabled={!isConnected || invalid || parsed === 0n || busy}
+          disabled={!deployed || !isConnected || invalid || parsed === 0n || busy}
           className="w-full rounded-full bg-white py-2.5 font-semibold text-black hover:bg-zinc-200 disabled:opacity-40"
         >
-          {!isConnected
+          {!deployed
+            ? "Not deployed on this chain"
+            : !isConnected
             ? "Connect wallet"
             : invalid
               ? "Select two different assets"
@@ -260,7 +266,7 @@ export default function SwapPage() {
         {isSuccess && hash && step === "idle" && (
           <p className="text-sm text-zinc-300 text-center">
             Done!{" "}
-            <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
+            <a href={`${explorer}/tx/${hash}`} target="_blank" className="underline">
               tx
             </a>
           </p>

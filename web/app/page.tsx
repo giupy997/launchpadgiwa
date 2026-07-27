@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useTokens } from "@/lib/hooks";
+import { useTokens, useAppChain } from "@/lib/hooks";
 import { TokenCard } from "@/components/TokenCard";
+import { NotDeployedNotice } from "@/components/NotDeployedNotice";
 
 type Sort = "newest" | "raised" | "progress";
 
 export default function Explore() {
   const { tokens, isLoading, count } = useTokens();
+  const chain = useAppChain();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("newest");
 
@@ -28,11 +30,12 @@ export default function Explore() {
 
   return (
     <div className="space-y-10">
+      <NotDeployedNotice />
       <section className="text-center space-y-4 py-6">
         <h1 className="font-mono text-3xl sm:text-4xl font-bold tracking-[0.15em] uppercase leading-snug">
           Launch your token
           <br />
-          on GIWA
+          on {chain.name.replace(" Sepolia", "").replace(" Chain", "")}
         </h1>
         <p className="text-zinc-400 max-w-xl mx-auto">
           Transparent bonding curve: price rises with every buy, automatic

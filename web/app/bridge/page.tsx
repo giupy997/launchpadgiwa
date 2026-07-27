@@ -58,6 +58,10 @@ export default function BridgePage() {
         Move test ETH from Ethereum Sepolia to GIWA Sepolia through the official
         OP Stack Standard Bridge.
       </p>
+      <p className="text-xs text-zinc-600 text-center">
+        For Robinhood Chain, use the official Robinhood bridge — this section
+        covers GIWA only.
+      </p>
 
       <div className="grid grid-cols-2 gap-3">
         <Balance label="Ethereum Sepolia" value={l1Bal?.value} />

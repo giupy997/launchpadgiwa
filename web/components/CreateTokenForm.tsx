@@ -4,15 +4,17 @@ import { useState } from "react";
 import { parseEther } from "viem";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { launchpadAbi } from "@/lib/abi";
-import { useLaunchpadAddress } from "@/lib/hooks";
-import { EXPLORER } from "@/lib/config";
+import { useLaunchpadAddress, useExplorer } from "@/lib/hooks";
 import { TokenLogo } from "@/components/TokenLogo";
 
 const inputCls =
   "w-full rounded-lg bg-black border border-zinc-700 px-3 py-2 text-sm focus:border-white outline-none placeholder:text-zinc-600";
 
 export function CreateTokenForm() {
-  const pad = useLaunchpadAddress();
+  const padMaybe = useLaunchpadAddress();
+  const deployed = !!padMaybe;
+  const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
+  const explorer = useExplorer();
   const { isConnected } = useAccount();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -118,10 +120,12 @@ export function CreateTokenForm() {
 
         <button
           type="submit"
-          disabled={!isConnected || isPending || isConfirming}
+          disabled={!deployed || !isConnected || isPending || isConfirming}
           className="w-full rounded-full bg-white py-2.5 font-semibold text-black hover:bg-zinc-200 disabled:opacity-40"
         >
-          {!isConnected
+          {!deployed
+            ? "Not deployed on this chain"
+            : !isConnected
             ? "Connect wallet to launch"
             : isPending
               ? "Sign in wallet…"
@@ -134,7 +138,7 @@ export function CreateTokenForm() {
       {isSuccess && hash && (
         <p className="mt-3 text-sm text-zinc-300">
           Token created!{" "}
-          <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
+          <a href={`${explorer}/tx/${hash}`} target="_blank" className="underline">
             View transaction
           </a>{" "}
           <button onClick={() => reset()} className="text-zinc-500 underline ml-2">

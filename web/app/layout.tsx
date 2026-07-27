@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ConnectButton } from "@/components/ConnectButton";
+import { ChainSwitcher } from "@/components/ChainSwitcher";
 import { Nav } from "@/components/Nav";
 import Link from "next/link";
 
@@ -40,19 +41,22 @@ export default function RootLayout({
                 HOLO
               </Link>
               <Nav />
-              <ConnectButton />
+              <div className="flex items-center gap-2 shrink-0">
+                <ChainSwitcher />
+                <ConnectButton />
+              </div>
             </div>
           </header>
           <main className="mx-auto max-w-5xl px-4 py-10">{children}</main>
           <footer className="border-t border-zinc-900">
             <div className="mx-auto max-w-5xl px-4 py-8 text-xs text-zinc-600 font-mono tracking-wide">
-              TESTNET ONLY — NO REAL VALUE · GIWA SEPOLIA · CONTRACT:{" "}
+              HOLO LAUNCHPAD · MULTICHAIN ·{" "}
               <a
                 className="underline hover:text-zinc-300"
-                href="https://sepolia-explorer.giwa.io/address/0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73"
+                href="https://github.com/giupy997/launchpadgiwa"
                 target="_blank"
               >
-                0x1f3F…fC73
+                SOURCE
               </a>
             </div>
           </footer>

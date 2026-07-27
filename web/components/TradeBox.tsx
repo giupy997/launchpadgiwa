@@ -9,9 +9,8 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
-import { useLaunchpadAddress } from "@/lib/hooks";
+import { useLaunchpadAddress, useExplorer } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
-import { EXPLORER } from "@/lib/config";
 
 const SLIPPAGE_BPS = 100n; // 1% tolerance on the quote
 
@@ -24,7 +23,10 @@ export function TradeBox({
   symbol: string;
   graduated: boolean;
 }) {
-  const pad = useLaunchpadAddress();
+  const padMaybe = useLaunchpadAddress();
+  const deployed = !!padMaybe;
+  const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
+  const explorer = useExplorer();
   const { address: user, isConnected } = useAccount();
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
@@ -156,14 +158,16 @@ export function TradeBox({
 
         <button
           type="submit"
-          disabled={!isConnected || parsed === 0n || isPending || isConfirming}
+          disabled={!deployed || !isConnected || parsed === 0n || isPending || isConfirming}
           className={`w-full rounded-lg py-2.5 font-semibold text-black disabled:opacity-40 ${
             mode === "buy"
               ? "bg-white hover:bg-zinc-200"
               : "bg-zinc-300 hover:bg-white"
           }`}
         >
-          {!isConnected
+          {!deployed
+            ? "Not deployed on this chain"
+            : !isConnected
             ? "Connect wallet"
             : isPending
               ? "Sign in wallet…"
@@ -182,7 +186,7 @@ export function TradeBox({
       {isSuccess && hash && (
         <p className="text-sm text-zinc-300">
           Done!{" "}
-          <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
+          <a href={`${explorer}/tx/${hash}`} target="_blank" className="underline">
             tx
           </a>
         </p>
