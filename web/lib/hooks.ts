@@ -19,16 +19,46 @@ export type CurveInfo = {
   creator: `0x${string}`;
 };
 
+export type TokenMeta = {
+  logoURI: string;
+  website: string;
+  twitter: string;
+  telegram: string;
+};
+
 export type TokenInfo = {
   address: `0x${string}`;
   name: string;
   symbol: string;
   curve: CurveInfo;
+  meta: TokenMeta;
 };
 
 const REFETCH = { refetchInterval: 5_000 } as const;
 
-/** Full token list with name, symbol and curve state (multicall). */
+export function parseCurve(result: unknown): CurveInfo {
+  const [vEth, vToken, realEth, sold, graduated, creator] = result as readonly [
+    bigint,
+    bigint,
+    bigint,
+    bigint,
+    boolean,
+    `0x${string}`,
+  ];
+  return { vEth, vToken, realEth, sold, graduated, creator };
+}
+
+export function parseMeta(result: unknown): TokenMeta {
+  const [logoURI, website, twitter, telegram] = result as readonly [
+    string,
+    string,
+    string,
+    string,
+  ];
+  return { logoURI, website, twitter, telegram };
+}
+
+/** Full token list with name, symbol, curve state and metadata (multicall). */
 export function useTokens() {
   const pad = useLaunchpadAddress();
 
@@ -64,6 +94,7 @@ export function useTokens() {
       { address: t, abi: launchTokenAbi, functionName: "name" as const },
       { address: t, abi: launchTokenAbi, functionName: "symbol" as const },
       { address: pad, abi: launchpadAbi, functionName: "curves" as const, args: [t] as const },
+      { address: pad, abi: launchpadAbi, functionName: "tokenMetadata" as const, args: [t] as const },
     ]),
     query: { enabled: tokenAddrs.length > 0, ...REFETCH },
   });
@@ -72,28 +103,23 @@ export function useTokens() {
     if (!details) return [];
     return tokenAddrs
       .map((address, i) => {
-        const name = details[i * 3];
-        const symbol = details[i * 3 + 1];
-        const curve = details[i * 3 + 2];
+        const name = details[i * 4];
+        const symbol = details[i * 4 + 1];
+        const curve = details[i * 4 + 2];
+        const meta = details[i * 4 + 3];
         if (
           name?.status !== "success" ||
           symbol?.status !== "success" ||
-          curve?.status !== "success"
+          curve?.status !== "success" ||
+          meta?.status !== "success"
         )
           return null;
-        const [vEth, vToken, realEth, sold, graduated, creator] = curve.result as readonly [
-          bigint,
-          bigint,
-          bigint,
-          bigint,
-          boolean,
-          `0x${string}`,
-        ];
         return {
           address,
           name: name.result as string,
           symbol: symbol.result as string,
-          curve: { vEth, vToken, realEth, sold, graduated, creator },
+          curve: parseCurve(curve.result),
+          meta: parseMeta(meta.result),
         };
       })
       .filter((t): t is TokenInfo => t !== null)

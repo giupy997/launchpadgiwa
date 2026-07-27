@@ -49,12 +49,23 @@ contract Launchpad is Ownable, ReentrancyGuard {
         address creator;
     }
 
+    /// Off-chain presentation data, stored on-chain so the frontend needs no
+    /// indexer. logoURI should point to a square (1:1) image.
+    struct TokenMetadata {
+        string logoURI;
+        string website;
+        string twitter;
+        string telegram;
+    }
+
     mapping(address token => Curve) public curves;
+    mapping(address token => TokenMetadata) public tokenMetadata;
     address[] public allTokens;
 
     // ---------------------------------------------------------------- events
 
     event TokenCreated(address indexed token, address indexed creator, string name, string symbol);
+    event MetadataUpdated(address indexed token, string logoURI, string website, string twitter, string telegram);
     event Bought(address indexed token, address indexed buyer, uint256 ethIn, uint256 tokensOut, uint256 fee);
     event Sold(address indexed token, address indexed seller, uint256 tokensIn, uint256 ethOut, uint256 fee);
     event Graduated(address indexed token, uint256 raisedEth);
@@ -66,6 +77,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
     // ---------------------------------------------------------------- errors
 
     error UnknownToken();
+    error NotCreator();
     error AlreadyGraduated();
     error NotYetGraduated();
     error ZeroAmount();
@@ -82,12 +94,12 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     /// @notice Deploy a new token and open its curve. Sending ETH performs an
     ///         initial buy for the creator in the same transaction.
-    function createToken(string calldata name, string calldata symbol, uint256 minTokensOut)
-        external
-        payable
-        nonReentrant
-        returns (address token)
-    {
+    function createToken(
+        string calldata name,
+        string calldata symbol,
+        uint256 minTokensOut,
+        TokenMetadata calldata meta
+    ) external payable nonReentrant returns (address token) {
         token = address(new LaunchToken(name, symbol, TOTAL_SUPPLY));
         curves[token] = Curve({
             vEth: VIRTUAL_ETH,
@@ -97,12 +109,23 @@ contract Launchpad is Ownable, ReentrancyGuard {
             graduated: false,
             creator: msg.sender
         });
+        tokenMetadata[token] = meta;
         allTokens.push(token);
         emit TokenCreated(token, msg.sender, name, symbol);
+        emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram);
 
         if (msg.value > 0) {
             _buy(token, msg.sender, msg.value, minTokensOut);
         }
+    }
+
+    /// @notice The token creator can update logo and links at any time.
+    function updateMetadata(address token, TokenMetadata calldata meta) external {
+        Curve storage c = curves[token];
+        if (c.vEth == 0) revert UnknownToken();
+        if (msg.sender != c.creator) revert NotCreator();
+        tokenMetadata[token] = meta;
+        emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram);
     }
 
     // ---------------------------------------------------------------- trade

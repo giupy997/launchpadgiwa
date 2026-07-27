@@ -6,6 +6,10 @@ import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagm
 import { launchpadAbi } from "@/lib/abi";
 import { useLaunchpadAddress } from "@/lib/hooks";
 import { EXPLORER } from "@/lib/config";
+import { TokenLogo } from "@/components/TokenLogo";
+
+const inputCls =
+  "w-full rounded-lg bg-black border border-zinc-700 px-3 py-2 text-sm focus:border-white outline-none placeholder:text-zinc-600";
 
 export function CreateTokenForm() {
   const pad = useLaunchpadAddress();
@@ -13,6 +17,10 @@ export function CreateTokenForm() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [initialBuy, setInitialBuy] = useState("");
+  const [logoURI, setLogoURI] = useState("");
+  const [website, setWebsite] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [telegram, setTelegram] = useState("");
 
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
@@ -23,14 +31,26 @@ export function CreateTokenForm() {
       address: pad,
       abi: launchpadAbi,
       functionName: "createToken",
-      args: [name.trim(), symbol.trim().toUpperCase(), 0n],
+      args: [
+        name.trim(),
+        symbol.trim().toUpperCase(),
+        0n,
+        {
+          logoURI: logoURI.trim(),
+          website: website.trim(),
+          twitter: twitter.trim(),
+          telegram: telegram.trim(),
+        },
+      ],
       value: initialBuy ? parseEther(initialBuy) : 0n,
     });
   }
 
   return (
-    <section className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 max-w-xl mx-auto">
-      <h2 className="font-semibold mb-4">🚀 Create a token</h2>
+    <section className="rounded-xl border border-zinc-800 bg-black p-6 max-w-xl mx-auto">
+      <h2 className="font-mono text-sm font-semibold tracking-[0.2em] uppercase mb-5">
+        Create a token
+      </h2>
       <form onSubmit={submit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <input
@@ -39,7 +59,7 @@ export function CreateTokenForm() {
             placeholder="Name (e.g. Giwa Cat)"
             required
             maxLength={32}
-            className="rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm focus:border-emerald-500 outline-none"
+            className={inputCls}
           />
           <input
             value={symbol}
@@ -47,9 +67,45 @@ export function CreateTokenForm() {
             placeholder="Ticker (e.g. GCAT)"
             required
             maxLength={10}
-            className="rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm uppercase focus:border-emerald-500 outline-none"
+            className={`${inputCls} uppercase`}
           />
         </div>
+
+        <div className="flex gap-3 items-start">
+          <input
+            value={logoURI}
+            onChange={(e) => setLogoURI(e.target.value)}
+            placeholder="Logo URL — square 1:1 image (optional)"
+            type="url"
+            className={inputCls}
+          />
+          <TokenLogo uri={logoURI.trim()} symbol={symbol} size={38} />
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <input
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            placeholder="Website"
+            type="url"
+            className={inputCls}
+          />
+          <input
+            value={twitter}
+            onChange={(e) => setTwitter(e.target.value)}
+            placeholder="X / Twitter"
+            type="url"
+            className={inputCls}
+          />
+          <input
+            value={telegram}
+            onChange={(e) => setTelegram(e.target.value)}
+            placeholder="Telegram"
+            type="url"
+            className={inputCls}
+          />
+        </div>
+
         <input
           value={initialBuy}
           onChange={(e) => setInitialBuy(e.target.value)}
@@ -57,12 +113,13 @@ export function CreateTokenForm() {
           type="number"
           step="any"
           min="0"
-          className="w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm focus:border-emerald-500 outline-none"
+          className={inputCls}
         />
+
         <button
           type="submit"
           disabled={!isConnected || isPending || isConfirming}
-          className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-40"
+          className="w-full rounded-full bg-white py-2.5 font-semibold text-black hover:bg-zinc-200 disabled:opacity-40"
         >
           {!isConnected
             ? "Connect wallet to launch"
@@ -75,7 +132,7 @@ export function CreateTokenForm() {
       </form>
 
       {isSuccess && hash && (
-        <p className="mt-3 text-sm text-emerald-400">
+        <p className="mt-3 text-sm text-zinc-300">
           Token created!{" "}
           <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
             View transaction
@@ -86,8 +143,8 @@ export function CreateTokenForm() {
         </p>
       )}
       {error && (
-        <p className="mt-3 text-sm text-red-400 break-all">
-          {(error as { shortMessage?: string }).shortMessage ?? error.message}
+        <p className="mt-3 text-sm text-zinc-400 break-all border border-zinc-700 rounded-lg p-2">
+          ⚠ {(error as { shortMessage?: string }).shortMessage ?? error.message}
         </p>
       )}
     </section>

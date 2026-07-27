@@ -14,7 +14,7 @@ export function ConnectButton() {
       <button
         onClick={() => connect({ connector: connectors[0] })}
         disabled={isPending || connectors.length === 0}
-        className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50"
+        className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50"
       >
         {isPending ? "Connecting…" : "Connect wallet"}
       </button>
@@ -25,7 +25,7 @@ export function ConnectButton() {
     return (
       <button
         onClick={() => switchChain({ chainId: giwaSepolia.id })}
-        className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-400"
+        className="rounded-full border border-white px-5 py-2 text-sm font-semibold text-white hover:bg-white hover:text-black"
       >
         Switch to GIWA Sepolia
       </button>
@@ -35,7 +35,7 @@ export function ConnectButton() {
   return (
     <button
       onClick={() => disconnect()}
-      className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+      className="rounded-full border border-zinc-700 px-5 py-2 text-sm font-mono text-zinc-300 hover:border-white hover:text-white"
       title="Disconnect"
     >
       {address?.slice(0, 6)}…{address?.slice(-4)}

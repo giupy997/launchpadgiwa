@@ -103,8 +103,8 @@ export function TradeBox({
 
   if (graduated) {
     return (
-      <div className="rounded-xl border border-amber-500/40 bg-zinc-900/60 p-5 h-fit">
-        <p className="text-sm text-amber-300">
+      <div className="rounded-xl border border-zinc-700 bg-black p-5 h-fit">
+        <p className="text-sm text-zinc-300">
           🎓 Curve completed: trading here is closed. This token&apos;s liquidity
           lives (or will live) on the DEX after migration.
         </p>
@@ -113,12 +113,12 @@ export function TradeBox({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 h-fit space-y-4">
-      <div className="grid grid-cols-2 rounded-lg bg-zinc-950 p-1 text-sm font-semibold">
-        <Tab active={mode === "buy"} onClick={() => setMode("buy")} color="emerald">
+    <div className="rounded-xl border border-zinc-800 bg-black p-5 h-fit space-y-4">
+      <div className="grid grid-cols-2 rounded-lg bg-zinc-900 p-1 text-sm font-semibold">
+        <Tab active={mode === "buy"} onClick={() => setMode("buy")}>
           Buy
         </Tab>
-        <Tab active={mode === "sell"} onClick={() => setMode("sell")} color="red">
+        <Tab active={mode === "sell"} onClick={() => setMode("sell")}>
           Sell
         </Tab>
       </div>
@@ -132,7 +132,7 @@ export function TradeBox({
             type="number"
             step="any"
             min="0"
-            className="w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm focus:border-emerald-500 outline-none"
+            className="w-full rounded-lg bg-black border border-zinc-700 px-3 py-2 text-sm focus:border-white outline-none"
           />
           {mode === "sell" && balance !== undefined && (
             <button
@@ -157,10 +157,10 @@ export function TradeBox({
         <button
           type="submit"
           disabled={!isConnected || parsed === 0n || isPending || isConfirming}
-          className={`w-full rounded-lg py-2.5 font-semibold text-zinc-950 disabled:opacity-40 ${
+          className={`w-full rounded-lg py-2.5 font-semibold text-black disabled:opacity-40 ${
             mode === "buy"
-              ? "bg-emerald-500 hover:bg-emerald-400"
-              : "bg-red-400 hover:bg-red-300"
+              ? "bg-white hover:bg-zinc-200"
+              : "bg-zinc-300 hover:bg-white"
           }`}
         >
           {!isConnected
@@ -180,7 +180,7 @@ export function TradeBox({
       <p className="text-xs text-zinc-600">1% fee · max 1% slippage on quote</p>
 
       {isSuccess && hash && (
-        <p className="text-sm text-emerald-400">
+        <p className="text-sm text-zinc-300">
           Done!{" "}
           <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
             tx
@@ -188,7 +188,7 @@ export function TradeBox({
         </p>
       )}
       {error && (
-        <p className="text-sm text-red-400 break-all">
+        <p className="text-sm text-zinc-400 break-all">
           {(error as { shortMessage?: string }).shortMessage ?? error.message}
         </p>
       )}
@@ -199,16 +199,13 @@ export function TradeBox({
 function Tab({
   active,
   onClick,
-  color,
   children,
 }: {
   active: boolean;
   onClick: () => void;
-  color: "emerald" | "red";
   children: React.ReactNode;
 }) {
-  const activeCls =
-    color === "emerald" ? "bg-emerald-500 text-zinc-950" : "bg-red-400 text-zinc-950";
+  const activeCls = "bg-white text-black";
   return (
     <button
       type="button"

@@ -33,9 +33,18 @@ contract LaunchpadTest is Test {
         vm.deal(bob, 100 ether);
     }
 
+    function _meta() internal pure returns (Launchpad.TokenMetadata memory) {
+        return Launchpad.TokenMetadata({
+            logoURI: "https://example.com/logo.png",
+            website: "https://example.com",
+            twitter: "https://x.com/test",
+            telegram: "https://t.me/test"
+        });
+    }
+
     function _create() internal returns (address) {
         vm.prank(alice);
-        return pad.createToken("Test Coin", "TEST", 0);
+        return pad.createToken("Test Coin", "TEST", 0, _meta());
     }
 
     // ------------------------------------------------------------- creation
@@ -49,8 +58,33 @@ contract LaunchpadTest is Test {
 
     function test_createWithInitialBuy() public {
         vm.prank(alice);
-        address token = pad.createToken{value: 0.1 ether}("Test", "TST", 0);
+        address token = pad.createToken{value: 0.1 ether}("Test", "TST", 0, _meta());
         assertGt(LaunchToken(token).balanceOf(alice), 0);
+    }
+
+    function test_metadataStoredOnCreate() public {
+        address token = _create();
+        (string memory logo, string memory site,, string memory tg) = pad.tokenMetadata(token);
+        assertEq(logo, "https://example.com/logo.png");
+        assertEq(site, "https://example.com");
+        assertEq(tg, "https://t.me/test");
+    }
+
+    function test_creatorCanUpdateMetadata() public {
+        address token = _create();
+        Launchpad.TokenMetadata memory m = _meta();
+        m.logoURI = "ipfs://newlogo";
+        vm.prank(alice);
+        pad.updateMetadata(token, m);
+        (string memory logo,,,) = pad.tokenMetadata(token);
+        assertEq(logo, "ipfs://newlogo");
+    }
+
+    function test_nonCreatorCannotUpdateMetadata() public {
+        address token = _create();
+        vm.prank(bob);
+        vm.expectRevert(Launchpad.NotCreator.selector);
+        pad.updateMetadata(token, _meta());
     }
 
     // ------------------------------------------------------------- buying

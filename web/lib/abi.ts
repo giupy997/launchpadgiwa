@@ -143,6 +143,33 @@ export const launchpadAbi = [
         "name": "minTokensOut",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "meta",
+        "type": "tuple",
+        "internalType": "struct Launchpad.TokenMetadata",
+        "components": [
+          {
+            "name": "logoURI",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "website",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "twitter",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "telegram",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
       }
     ],
     "outputs": [
@@ -401,6 +428,40 @@ export const launchpadAbi = [
   },
   {
     "type": "function",
+    "name": "tokenMetadata",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "logoURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "website",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "twitter",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "telegram",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "transferOwnership",
     "inputs": [
       {
@@ -424,6 +485,46 @@ export const launchpadAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "updateMetadata",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "meta",
+        "type": "tuple",
+        "internalType": "struct Launchpad.TokenMetadata",
+        "components": [
+          {
+            "name": "logoURI",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "website",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "twitter",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "telegram",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "event",
@@ -490,6 +591,43 @@ export const launchpadAbi = [
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MetadataUpdated",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "logoURI",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "website",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "twitter",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "telegram",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false
@@ -650,6 +788,11 @@ export const launchpadAbi = [
   {
     "type": "error",
     "name": "MigratorNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotCreator",
     "inputs": []
   },
   {

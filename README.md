@@ -8,7 +8,8 @@ future multichain deployments (Monad, MegaETH, ...).
 
 - `contracts/` — smart contracts (Solidity + Foundry)
   - `src/Launchpad.sol` — factory + bonding curve (constant product with
-    virtual reserves), protocol fees, graduation and DEX migration
+    virtual reserves), protocol fees, graduation and DEX migration; on-chain
+    token metadata (1:1 logo URI, website, X, Telegram) editable by the creator
   - `src/LaunchToken.sol` — ERC-20 created by the launchpad; transfers locked
     until graduation
   - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
@@ -29,7 +30,9 @@ future multichain deployments (Monad, MegaETH, ...).
 
 | Chain | Contract | Address |
 |---|---|---|
-| GIWA Sepolia (91342) | Launchpad | [`0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1`](https://sepolia-explorer.giwa.io/address/0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1) |
+| GIWA Sepolia (91342) | Launchpad | [`0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73`](https://sepolia-explorer.giwa.io/address/0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73) |
+
+(previous deployment without metadata: `0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1`)
 
 ## Network: GIWA Sepolia (testnet)
 

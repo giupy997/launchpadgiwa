@@ -19,7 +19,7 @@ export const giwaSepolia = defineChain({
 
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}`> = {
-  [giwaSepolia.id]: "0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1",
+  [giwaSepolia.id]: "0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73",
 };
 
 export const config = createConfig({
