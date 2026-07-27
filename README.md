@@ -38,7 +38,7 @@ future multichain deployments (Monad, MegaETH, ...).
 | Chain | Contract | Address |
 |---|---|---|
 | GIWA Sepolia (91342) | Launchpad | [`0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73`](https://sepolia-explorer.giwa.io/address/0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73) |
-| Robinhood Chain (4663) | Launchpad | pending — fund deployer, then `forge script script/Deploy.s.sol --rpc-url robinhood --broadcast` |
+| Robinhood Chain (4663) | Launchpad | [`0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85`](https://robinhoodchain.blockscout.com/address/0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85) |
 
 (previous GIWA deployment without metadata: `0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1`)
 
@@ -48,8 +48,8 @@ The app has a chain switcher in the header (GIWA Sepolia · Robinhood Chain).
 Per-chain launchpad addresses live in `web/lib/config.ts` (`LAUNCHPAD_ADDRESS`);
 chains without a deployment show a notice and disable trading. Robinhood
 Chain (Arbitrum Orbit, chain ID 4663, RPC `https://rpc.mainnet.chain.robinhood.com`,
-explorer `https://explorer.mainnet.chain.robinhood.com`) is a mainnet:
-deploying and using it costs real ETH.
+explorer `https://robinhoodchain.blockscout.com`) is a mainnet: using it
+costs real ETH, and the contracts are unaudited — trade accordingly.
 
 ## Network: GIWA Sepolia (testnet)
 

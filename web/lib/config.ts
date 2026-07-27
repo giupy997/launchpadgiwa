@@ -28,7 +28,7 @@ export const robinhood = defineChain({
   blockExplorers: {
     default: {
       name: "Robinhood Explorer",
-      url: "https://explorer.mainnet.chain.robinhood.com",
+      url: "https://robinhoodchain.blockscout.com",
     },
   },
   contracts: {
@@ -44,7 +44,7 @@ export const APP_CHAINS = [giwaSepolia, robinhood] as const;
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}` | undefined> = {
   [giwaSepolia.id]: "0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73",
-  [robinhood.id]: undefined, // deploy pending — fund the deployer, then forge script
+  [robinhood.id]: "0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85",
 };
 
 // OP Stack standard bridge for GIWA Sepolia (on Ethereum Sepolia, L1).
