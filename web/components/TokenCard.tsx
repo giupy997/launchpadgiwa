@@ -28,7 +28,7 @@ export function TokenCard({ token: t }: { token: TokenInfo }) {
       </div>
       <div className="mt-3 text-xs text-zinc-500">creator {shortAddr(t.curve.creator)}</div>
       <div className="mt-3 flex justify-between text-sm">
-        <span className="text-zinc-300">{fmtEth(spotPrice(t.curve), 12)} ETH</span>
+        <span className="text-zinc-300">{fmtEth(spotPrice(t.curve))} ETH</span>
         <span className="text-zinc-500">raised {fmtEth(t.curve.realEth)} ETH</span>
       </div>
       <div className="mt-3 h-1 rounded bg-zinc-800 overflow-hidden">

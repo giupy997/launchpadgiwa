@@ -104,7 +104,7 @@ export default function SwapPage() {
         value: ethIn,
       });
     }
-  }, [step, isSuccess, to, ethIn, buyQuote, pad, reset, writeContract]);
+  }, [step, isSuccess, to, ethIn, buyQuote, pad, appChainId, reset, writeContract]);
 
   useEffect(() => {
     if (step === "buying" && isSuccess) setStep("idle");

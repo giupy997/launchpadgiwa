@@ -122,7 +122,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
         {meta.livestream && <LiveStream url={meta.livestream} />}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Stat label="Price" value={`${fmtEth(spotPrice(curve), 12)} ETH`} />
+          <Stat label="Price" value={`${fmtEth(spotPrice(curve))} ETH`} />
           <Stat label="Raised" value={`${fmtEth(curve.realEth)} ETH`} />
           <Stat label="Sold" value={fmtTokens(curve.sold)} />
           <Stat label="Curve" value={curve.graduated ? "Graduated" : `${progress.toFixed(1)}%`} />

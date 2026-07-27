@@ -16,7 +16,7 @@ function subscriptSmall(v: number, sig = 3): string {
 }
 
 /** Human ETH amount: sensible digits per magnitude, subscript zeros when tiny. */
-export function fmtEth(wei: bigint, _digits = 5): string {
+export function fmtEth(wei: bigint): string {
   const v = Number(formatEther(wei));
   return fmtNum(v);
 }
