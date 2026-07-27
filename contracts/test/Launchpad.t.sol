@@ -97,9 +97,53 @@ contract LaunchpadTest is Test {
         pad.buy{value: 1 ether}(token, quoted);
 
         assertEq(LaunchToken(token).balanceOf(bob), quoted);
-        assertEq(treasury.balance, 0.01 ether); // 1% fee
+        // 1% fee: 60% accrues to the creator (alice), 40% to treasury
+        assertEq(treasury.balance, 0.004 ether);
+        assertEq(pad.creatorFees(alice), 0.006 ether);
         (,, uint256 realEth,,,) = pad.curves(token);
         assertEq(realEth, 0.99 ether);
+    }
+
+    function test_creatorFeeAccruesOnSellToo() public {
+        address token = _create();
+        vm.startPrank(bob);
+        pad.buy{value: 1 ether}(token, 0);
+        uint256 bal = LaunchToken(token).balanceOf(bob);
+        LaunchToken(token).approve(address(pad), bal);
+        pad.sell(token, bal, 0);
+        vm.stopPrank();
+        // fees from both legs accrued to alice, none lost
+        assertGt(pad.creatorFees(alice), 0.006 ether); // buy fee + sell fee
+    }
+
+    function test_claimCreatorFees() public {
+        address token = _create();
+        vm.prank(bob);
+        pad.buy{value: 1 ether}(token, 0);
+
+        uint256 accrued = pad.creatorFees(alice);
+        uint256 before = alice.balance;
+        vm.prank(alice);
+        pad.claimCreatorFees();
+
+        assertEq(alice.balance - before, accrued);
+        assertEq(pad.creatorFees(alice), 0);
+    }
+
+    function test_claimRevertsWhenNothingAccrued() public {
+        vm.prank(bob);
+        vm.expectRevert(Launchpad.ZeroAmount.selector);
+        pad.claimCreatorFees();
+    }
+
+    function test_creatorFeeShareCapAndOwner() public {
+        vm.expectRevert(Launchpad.FeeTooHigh.selector);
+        pad.setCreatorFeeShareBps(10_001);
+        pad.setCreatorFeeShareBps(5_000);
+        assertEq(pad.creatorFeeShareBps(), 5_000);
+        vm.prank(alice);
+        vm.expectRevert();
+        pad.setCreatorFeeShareBps(1_000);
     }
 
     function test_priceIncreasesWithBuys() public {

@@ -1,0 +1,69 @@
+"use client";
+
+import { type Trade } from "@/lib/events";
+import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
+import { useExplorer } from "@/lib/hooks";
+
+export function TradeFeed({
+  trades,
+  symbol,
+  truncated,
+}: {
+  trades: Trade[];
+  symbol: string;
+  truncated: boolean;
+}) {
+  const explorer = useExplorer();
+  const recent = [...trades].reverse().slice(0, 20);
+
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-black">
+      <div className="px-4 py-3 border-b border-zinc-900 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
+        Trades {trades.length > 0 && `(${trades.length}${truncated ? "+" : ""})`}
+      </div>
+      {recent.length === 0 && (
+        <p className="px-4 py-6 text-sm text-zinc-600">No trades yet.</p>
+      )}
+      <ul className="divide-y divide-zinc-900">
+        {recent.map((t) => (
+          <li key={t.tx + t.type + t.trader} className="px-4 py-2.5 flex items-center gap-3 text-sm">
+            <span
+              className={`font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full border ${
+                t.type === "buy" ? "border-white text-white" : "border-zinc-600 text-zinc-400"
+              }`}
+            >
+              {t.type}
+            </span>
+            <a
+              href={`${explorer}/address/${t.trader}`}
+              target="_blank"
+              className="font-mono text-xs text-zinc-400 hover:text-white underline"
+            >
+              {shortAddr(t.trader)}
+            </a>
+            <span className="flex-1 text-right text-zinc-300">
+              {fmtTokens(t.tokens)} {symbol}
+            </span>
+            <span className="w-28 text-right text-zinc-500">{fmtEth(t.eth)} ETH</span>
+            <a
+              href={`${explorer}/tx/${t.tx}`}
+              target="_blank"
+              className="font-mono text-[10px] text-zinc-600 hover:text-white"
+              title={t.timestamp ? new Date(t.timestamp * 1000).toLocaleString() : undefined}
+            >
+              {t.timestamp ? timeAgo(t.timestamp) : "↗"}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function timeAgo(ts: number): string {
+  const s = Math.max(1, Math.floor(Date.now() / 1000 - ts));
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  return `${Math.floor(s / 86400)}d`;
+}

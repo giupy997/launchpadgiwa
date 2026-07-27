@@ -35,8 +35,14 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     uint256 public constant FEE_DENOMINATOR = 10_000;
     uint256 public feeBps = 100; // 1% on buys and sells
+    /// Share of each fee that accrues to the token's creator (60%); the rest
+    /// goes to the treasury. Creators withdraw with claimCreatorFees()
+    /// (pull-based, so a misbehaving creator address can never block trades).
+    uint256 public creatorFeeShareBps = 6_000;
     address public treasury;
     IDexMigrator public migrator;
+
+    mapping(address creator => uint256) public creatorFees;
 
     // ---------------------------------------------------------------- state
 
@@ -71,6 +77,8 @@ contract Launchpad is Ownable, ReentrancyGuard {
     event Graduated(address indexed token, uint256 raisedEth);
     event Migrated(address indexed token, uint256 tokenAmount, uint256 ethAmount);
     event FeeUpdated(uint256 feeBps);
+    event CreatorFeeShareUpdated(uint256 creatorFeeShareBps);
+    event CreatorFeesClaimed(address indexed creator, uint256 amount);
     event TreasuryUpdated(address treasury);
     event MigratorUpdated(address migrator);
 
@@ -169,7 +177,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.sold += tokensOut;
 
         IERC20(token).safeTransfer(buyer, tokensOut);
-        _sendEth(treasury, fee);
+        _splitFee(c.creator, fee);
         if (refund > 0) _sendEth(buyer, refund);
 
         emit Bought(token, buyer, ethIn - refund, tokensOut, fee);
@@ -201,7 +209,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.sold -= tokensIn;
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), tokensIn);
-        _sendEth(treasury, fee);
+        _splitFee(c.creator, fee);
         _sendEth(msg.sender, ethToSeller);
 
         emit Sold(token, msg.sender, tokensIn, ethToSeller, fee);
@@ -260,12 +268,37 @@ contract Launchpad is Ownable, ReentrancyGuard {
         emit Migrated(token, DEX_RESERVE, ethAmount);
     }
 
+    // ---------------------------------------------------------------- fees
+
+    /// @notice Splits a trade fee: creator share accrues for pull-withdrawal,
+    ///         the remainder goes straight to the treasury.
+    function _splitFee(address creator, uint256 fee) internal {
+        uint256 creatorCut = (fee * creatorFeeShareBps) / FEE_DENOMINATOR;
+        if (creatorCut > 0) creatorFees[creator] += creatorCut;
+        _sendEth(treasury, fee - creatorCut);
+    }
+
+    /// @notice Withdraw the fees accrued by all tokens you created.
+    function claimCreatorFees() external nonReentrant {
+        uint256 amount = creatorFees[msg.sender];
+        if (amount == 0) revert ZeroAmount();
+        creatorFees[msg.sender] = 0;
+        _sendEth(msg.sender, amount);
+        emit CreatorFeesClaimed(msg.sender, amount);
+    }
+
     // ---------------------------------------------------------------- admin
 
     function setFeeBps(uint256 newFeeBps) external onlyOwner {
         if (newFeeBps > 500) revert FeeTooHigh(); // max 5%
         feeBps = newFeeBps;
         emit FeeUpdated(newFeeBps);
+    }
+
+    function setCreatorFeeShareBps(uint256 newShareBps) external onlyOwner {
+        if (newShareBps > FEE_DENOMINATOR) revert FeeTooHigh();
+        creatorFeeShareBps = newShareBps;
+        emit CreatorFeeShareUpdated(newShareBps);
     }
 
     function setTreasury(address newTreasury) external onlyOwner {

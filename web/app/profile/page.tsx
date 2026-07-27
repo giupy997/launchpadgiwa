@@ -7,6 +7,7 @@ import { useTokens, spotPrice, useExplorer } from "@/lib/hooks";
 import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
 import { TokenCard } from "@/components/TokenCard";
 import { TokenLogo } from "@/components/TokenLogo";
+import { CreatorFees } from "@/components/CreatorFees";
 
 export default function ProfilePage() {
   const { address: user, isConnected } = useAccount();
@@ -59,13 +60,16 @@ export default function ProfilePage() {
             </a>
           </p>
         </div>
-        <div className="rounded-xl border border-zinc-800 px-5 py-3">
-          <div className="font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-            Balance
+        <div className="flex gap-3 flex-wrap">
+          <div className="rounded-xl border border-zinc-800 px-5 py-3">
+            <div className="font-mono text-[10px] tracking-widest uppercase text-zinc-500">
+              Balance
+            </div>
+            <div className="mt-0.5 font-semibold">
+              {ethBal ? `${fmtEth(ethBal.value)} ETH` : "…"}
+            </div>
           </div>
-          <div className="mt-0.5 font-semibold">
-            {ethBal ? `${fmtEth(ethBal.value)} ETH` : "…"}
-          </div>
+          <CreatorFees />
         </div>
       </section>
 

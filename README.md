@@ -8,8 +8,9 @@ future multichain deployments (Monad, MegaETH, ...).
 
 - `contracts/` — smart contracts (Solidity + Foundry)
   - `src/Launchpad.sol` — factory + bonding curve (constant product with
-    virtual reserves), protocol fees, graduation and DEX migration; on-chain
-    token metadata (1:1 logo URI, website, X, Telegram) editable by the creator
+    virtual reserves), graduation and DEX migration; on-chain token metadata
+    (1:1 logo URI, website, X, Telegram) editable by the creator; 1% trade fee
+    split 60% to the token creator (pull-based `claimCreatorFees`) / 40% treasury
   - `src/LaunchToken.sol` — ERC-20 created by the launchpad; transfers locked
     until graduation
   - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
@@ -18,7 +19,9 @@ future multichain deployments (Monad, MegaETH, ...).
     and sorting
   - `/create`: token creation with logo (1:1) and social links
   - `/token/[address]`: curve stats, progress bar, buy/sell box with
-    on-chain quotes, automatic approve and 1% slippage guard
+    on-chain quotes, automatic approve and 1% slippage guard; price chart
+    and trade feed built client-side from on-chain events (no indexer:
+    chunked `eth_getLogs` from the deployment block)
   - `/swap`: ETH ↔ token swaps on the curve; token → token routed
     through ETH in two transactions
   - `/bridge`: chain-aware — on GIWA, in-app ETH deposits Ethereum
@@ -40,10 +43,10 @@ future multichain deployments (Monad, MegaETH, ...).
 
 | Chain | Contract | Address |
 |---|---|---|
-| GIWA Sepolia (91342) | Launchpad | [`0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73`](https://sepolia-explorer.giwa.io/address/0x1f3F5C50f670D2B4d6d0f83c40Df92DBbE41fC73) |
-| Robinhood Chain (4663) | Launchpad | [`0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85`](https://robinhoodchain.blockscout.com/address/0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85) |
+| GIWA Sepolia (91342) | Launchpad | [`0xD74910600799db791e50BaBF3C7493AAd8A3B258`](https://sepolia-explorer.giwa.io/address/0xD74910600799db791e50BaBF3C7493AAd8A3B258) |
+| Robinhood Chain (4663) | Launchpad | [`0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85`](https://robinhoodchain.blockscout.com/address/0xCeeDeD003e6Ec6071b63830fb8f556FB4137dA85) — pre-creator-fees, redeploy pending |
 
-(previous GIWA deployment without metadata: `0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1`)
+(previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)
 
 ## Multichain
 
@@ -89,7 +92,9 @@ cd contracts && source .env && forge script script/Deploy.s.sol --rpc-url giwa_s
 - [x] Source verification on Blockscout (Launchpad and TEST token)
 - [ ] `IDexMigrator` adapter for a DEX on GIWA (to pick once the mainnet
       ecosystem is live)
-- [ ] Event indexer (creations, trades) for feed, rankings and price chart
+- [x] Trade feed + price chart from on-chain events (client-side getLogs)
+- [ ] Redeploy Robinhood Chain with creator fees and update address/deploy block
+- [ ] Verify GIWA v3 source on Blockscout (explorer API was down at deploy time)
 - [ ] End-to-end frontend test with a wallet (MetaMask) on GIWA Sepolia
 - [ ] Verify permissionless deploy policy on GIWA mainnet
 - [ ] Legal review (MiCA) before public launch

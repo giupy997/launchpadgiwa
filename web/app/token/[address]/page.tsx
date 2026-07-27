@@ -13,9 +13,13 @@ import {
 import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
 import { TradeBox } from "@/components/TradeBox";
 import { TokenLogo } from "@/components/TokenLogo";
+import { PriceChart } from "@/components/PriceChart";
+import { TradeFeed } from "@/components/TradeFeed";
+import { useTrades, pricePoints } from "@/lib/events";
 
 export default function TokenPage({ params }: { params: { address: string } }) {
   const token = params.address as `0x${string}`;
+  const { data: tradeData } = useTrades(token);
   const pad = useLaunchpadAddress() ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
 
@@ -108,6 +112,13 @@ export default function TokenPage({ params }: { params: { address: string } }) {
             Once 800M tokens are sold the curve closes and liquidity migrates to the DEX.
           </p>
         </div>
+
+        <PriceChart points={pricePoints(tradeData?.trades ?? [])} />
+        <TradeFeed
+          trades={tradeData?.trades ?? []}
+          symbol={symbol}
+          truncated={tradeData?.truncated ?? false}
+        />
       </div>
 
       <TradeBox token={token} symbol={symbol} graduated={curve.graduated} />
