@@ -13,7 +13,7 @@ import { useLaunchpadAddress } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
 import { EXPLORER } from "@/lib/config";
 
-const SLIPPAGE_BPS = 100n; // 1% di tolleranza sulla quote
+const SLIPPAGE_BPS = 100n; // 1% tolerance on the quote
 
 export function TradeBox({
   token,
@@ -105,8 +105,8 @@ export function TradeBox({
     return (
       <div className="rounded-xl border border-amber-500/40 bg-zinc-900/60 p-5 h-fit">
         <p className="text-sm text-amber-300">
-          🎓 Curva completata: il trading qui è chiuso. La liquidità di questo token
-          vive (o vivrà) sul DEX dopo la migrazione.
+          🎓 Curve completed: trading here is closed. This token&apos;s liquidity
+          lives (or will live) on the DEX after migration.
         </p>
       </div>
     );
@@ -116,10 +116,10 @@ export function TradeBox({
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 h-fit space-y-4">
       <div className="grid grid-cols-2 rounded-lg bg-zinc-950 p-1 text-sm font-semibold">
         <Tab active={mode === "buy"} onClick={() => setMode("buy")} color="emerald">
-          Compra
+          Buy
         </Tab>
         <Tab active={mode === "sell"} onClick={() => setMode("sell")} color="red">
-          Vendi
+          Sell
         </Tab>
       </div>
 
@@ -128,7 +128,7 @@ export function TradeBox({
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={mode === "buy" ? "ETH da spendere" : `${symbol} da vendere`}
+            placeholder={mode === "buy" ? "ETH to spend" : `${symbol} to sell`}
             type="number"
             step="any"
             min="0"
@@ -164,24 +164,24 @@ export function TradeBox({
           }`}
         >
           {!isConnected
-            ? "Connetti il wallet"
+            ? "Connect wallet"
             : isPending
-              ? "Firma nel wallet…"
+              ? "Sign in wallet…"
               : isConfirming
-                ? "In conferma…"
+                ? "Confirming…"
                 : needsApproval
-                  ? `Approva ${symbol}`
+                  ? `Approve ${symbol}`
                   : mode === "buy"
-                    ? "Compra"
-                    : "Vendi"}
+                    ? "Buy"
+                    : "Sell"}
         </button>
       </form>
 
-      <p className="text-xs text-zinc-600">Fee 1% · slippage max 1% sulla quote</p>
+      <p className="text-xs text-zinc-600">1% fee · max 1% slippage on quote</p>
 
       {isSuccess && hash && (
         <p className="text-sm text-emerald-400">
-          Fatto!{" "}
+          Done!{" "}
           <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
             tx
           </a>
@@ -229,7 +229,7 @@ function safeParse(v: string): bigint {
 }
 
 function fmtRaw(wei: bigint): string {
-  // stringa decimale completa per il campo input (max precision)
+  // full-precision decimal string for the input field
   const s = wei.toString().padStart(19, "0");
   const int = s.slice(0, -18);
   const frac = s.slice(-18).replace(/0+$/, "");

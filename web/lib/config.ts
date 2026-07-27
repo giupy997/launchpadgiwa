@@ -17,7 +17,7 @@ export const giwaSepolia = defineChain({
   testnet: true,
 });
 
-// Un indirizzo per chain: aggiungere qui i deploy futuri (multichain).
+// One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}`> = {
   [giwaSepolia.id]: "0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1",
 };

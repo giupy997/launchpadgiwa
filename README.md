@@ -1,58 +1,58 @@
-# laU NCHA — Token Launchpad
+# HOLO Launchpad
 
-Launchpad stile pump.fun per lanciare token su chain EVM. Target primario:
-**GIWA** (L2 OP Stack di Upbit/Dunamu), con architettura chain-agnostic per
-il deploy multichain futuro (Monad, MegaETH, ...).
+Pump.fun-style launchpad for launching tokens on EVM chains. Primary target:
+**GIWA** (Upbit/Dunamu's OP Stack L2), with a chain-agnostic architecture for
+future multichain deployments (Monad, MegaETH, ...).
 
-## Struttura
+## Structure
 
-- `contracts/` — smart contract (Solidity + Foundry)
-  - `src/Launchpad.sol` — factory + bonding curve (constant product con riserve
-    virtuali), fee di protocollo, graduation e migrazione DEX
-  - `src/LaunchToken.sol` — ERC-20 creato dal launchpad; transfer bloccati fino
-    alla graduation
-  - `src/interfaces/IDexMigrator.sol` — adapter DEX pluggabile (uno per chain)
-- `web/` — frontend Next.js 14 + wagmi v2 + viem
-  - Home: creazione token e lista dal contratto (multicall, refresh 5s)
-  - `/token/[address]`: stat della curva, progress bar, box buy/sell con
-    quote on-chain, approve automatico e slippage guard 1%
+- `contracts/` — smart contracts (Solidity + Foundry)
+  - `src/Launchpad.sol` — factory + bonding curve (constant product with
+    virtual reserves), protocol fees, graduation and DEX migration
+  - `src/LaunchToken.sol` — ERC-20 created by the launchpad; transfers locked
+    until graduation
+  - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
+- `web/` — Next.js 14 + wagmi v2 + viem frontend
+  - Home: token creation and on-chain token list (multicall, 5s refresh)
+  - `/token/[address]`: curve stats, progress bar, buy/sell box with
+    on-chain quotes, automatic approve and 1% slippage guard
 
-## Parametri della curva
+## Curve parameters
 
-- Supply totale: 1B per token; 800M venduti sulla curva, 200M riservati al DEX
-- Riserve virtuali: 1.25 ETH / 1.05B token → la curva raccoglie ~4 ETH
-- Fee: 1% su buy e sell (max 5%, configurabile dall'owner)
-- Graduation: quando gli 800M sono esauriti → trading su curva chiuso,
-  `migrate()` sposta 200M token + ETH raccolti sull'adapter DEX
+- Total supply: 1B per token; 800M sold on the curve, 200M reserved for DEX
+- Virtual reserves: 1.25 ETH / 1.05B tokens → the curve raises ~4 ETH
+- Fee: 1% on buys and sells (max 5%, owner-configurable)
+- Graduation: once the 800M are sold out → curve trading closes,
+  `migrate()` moves 200M tokens + raised ETH to the DEX adapter
 
-## Deploy
+## Deployments
 
-| Chain | Contratto | Indirizzo |
+| Chain | Contract | Address |
 |---|---|---|
 | GIWA Sepolia (91342) | Launchpad | [`0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1`](https://sepolia-explorer.giwa.io/address/0xf71bA49eaD9ae0b208F6BAb8769ae19C98629cC1) |
 
-## Rete: GIWA Sepolia (testnet)
+## Network: GIWA Sepolia (testnet)
 
-| Parametro | Valore |
+| Parameter | Value |
 |---|---|
 | Chain ID | 91342 |
 | RPC | https://sepolia-rpc.giwa.io/ |
 | Explorer | https://sepolia-explorer.giwa.io |
 | Gas token | ETH (test) |
-| Faucet | vedi https://docs.giwa.io/get-started/faucets |
+| Faucet | see https://docs.giwa.io/get-started/faucets |
 
-## Comandi
+## Commands
 
 ```bash
 cd contracts
-forge test                       # test suite (17 test, incluso fuzz)
+forge test                       # test suite (17 tests, incl. fuzz)
 ```
 
 ```bash
-cd web && npm install && npm run dev   # frontend su http://localhost:3000
+cd web && npm install && npm run dev   # frontend at http://localhost:3000
 ```
 
-Deploy su GIWA Sepolia (richiede `.env` con `PRIVATE_KEY`, vedi `.env.example`):
+Deploy to GIWA Sepolia (requires `.env` with `PRIVATE_KEY`, see `.env.example`):
 
 ```bash
 cd contracts && source .env && forge script script/Deploy.s.sol --rpc-url giwa_sepolia --private-key "$PRIVATE_KEY" --broadcast
@@ -60,13 +60,13 @@ cd contracts && source .env && forge script script/Deploy.s.sol --rpc-url giwa_s
 
 ## TODO
 
-- [x] Deploy su GIWA Sepolia (27 lug 2026) e smoke test read-only
-- [x] Smoke test on-chain: token di prova [`TEST` 0x7Fc8...1305](https://sepolia-explorer.giwa.io/address/0x7Fc8d6f3AD8b93F771Cd0Dadd458A495c42F1305) creato con buy iniziale, curva e prezzi verificati
-- [ ] Adapter `IDexMigrator` per un DEX su GIWA (da individuare quando
-      l'ecosistema mainnet sarà live)
-- [x] Frontend Next.js + wagmi/viem (crea, lista, compra, vendi)
-- [x] Verifica sorgente su Blockscout (Launchpad e token TEST)
-- [ ] Indexer eventi (creazioni, trade) per feed, classifiche e grafico prezzi
-- [ ] Test end-to-end del frontend con wallet (MetaMask) su GIWA Sepolia
-- [ ] Verifica policy di deploy permissionless su GIWA mainnet
-- [ ] Review legale (MiCA) prima del lancio pubblico
+- [x] Deploy to GIWA Sepolia (Jul 27, 2026) and read-only smoke test
+- [x] On-chain smoke test: test token [`TEST` 0x7Fc8...1305](https://sepolia-explorer.giwa.io/address/0x7Fc8d6f3AD8b93F771Cd0Dadd458A495c42F1305) created with initial buy, curve and pricing verified
+- [x] Next.js + wagmi frontend (create, list, buy, sell)
+- [x] Source verification on Blockscout (Launchpad and TEST token)
+- [ ] `IDexMigrator` adapter for a DEX on GIWA (to pick once the mainnet
+      ecosystem is live)
+- [ ] Event indexer (creations, trades) for feed, rankings and price chart
+- [ ] End-to-end frontend test with a wallet (MetaMask) on GIWA Sepolia
+- [ ] Verify permissionless deploy policy on GIWA mainnet
+- [ ] Legal review (MiCA) before public launch

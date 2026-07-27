@@ -28,7 +28,7 @@ export type TokenInfo = {
 
 const REFETCH = { refetchInterval: 5_000 } as const;
 
-/** Lista completa dei token con nome, simbolo e stato curva (multicall). */
+/** Full token list with name, symbol and curve state (multicall). */
 export function useTokens() {
   const pad = useLaunchpadAddress();
 
@@ -97,18 +97,18 @@ export function useTokens() {
         };
       })
       .filter((t): t is TokenInfo => t !== null)
-      .reverse(); // più recenti in cima
+      .reverse(); // newest first
   }, [details, tokenAddrs]);
 
   return { tokens, isLoading: isLoading && n > 0, count: n };
 }
 
-/** Prezzo spot in wei per token intero (1e18). */
+/** Spot price in wei per whole token (1e18). */
 export function spotPrice(curve: CurveInfo): bigint {
   return (curve.vEth * 10n ** 18n) / curve.vToken;
 }
 
-/** Progresso della curva 0..100 (800M = graduation). */
+/** Curve progress 0..100 (800M = graduation). */
 export function curveProgress(curve: CurveInfo): number {
   const CURVE_SUPPLY = 800_000_000n * 10n ** 18n;
   return Number((curve.sold * 10_000n) / CURVE_SUPPLY) / 100;

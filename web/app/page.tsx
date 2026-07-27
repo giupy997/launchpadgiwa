@@ -12,11 +12,11 @@ export default function Home() {
     <div className="space-y-10">
       <section className="text-center space-y-3 py-6">
         <h1 className="text-4xl font-bold tracking-tight">
-          Lancia il tuo token su <span className="text-emerald-400">GIWA</span>
+          Launch your token on <span className="text-emerald-400">GIWA</span>
         </h1>
         <p className="text-zinc-400 max-w-xl mx-auto">
-          Bonding curve trasparente: prezzo che sale a ogni acquisto, graduation
-          automatica a 800M di token venduti, liquidità migrata sul DEX.
+          Transparent bonding curve: price rises with every buy, automatic
+          graduation at 800M tokens sold, liquidity migrated to the DEX.
         </p>
       </section>
 
@@ -24,12 +24,12 @@ export default function Home() {
 
       <section>
         <h2 className="text-lg font-semibold mb-4 text-zinc-300">
-          Token lanciati {count > 0 && <span className="text-zinc-500">({count})</span>}
+          Launched tokens {count > 0 && <span className="text-zinc-500">({count})</span>}
         </h2>
 
-        {isLoading && <p className="text-zinc-500">Caricamento dalla chain…</p>}
+        {isLoading && <p className="text-zinc-500">Loading from chain…</p>}
         {!isLoading && tokens.length === 0 && (
-          <p className="text-zinc-500">Ancora nessun token. Sii il primo a lanciare.</p>
+          <p className="text-zinc-500">No tokens yet. Be the first to launch.</p>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -53,7 +53,7 @@ export default function Home() {
                     {fmtEth(spotPrice(t.curve), 12)} ETH
                   </span>
                   <span className="text-zinc-400">
-                    raccolti {fmtEth(t.curve.realEth)} ETH
+                    raised {fmtEth(t.curve.realEth)} ETH
                   </span>
                 </div>
                 <div className="mt-3 h-1.5 rounded bg-zinc-800 overflow-hidden">
@@ -63,7 +63,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="mt-1 text-xs text-zinc-500">
-                  {t.curve.graduated ? "🎓 Graduato" : `curva ${progress.toFixed(1)}%`}
+                  {t.curve.graduated ? "🎓 Graduated" : `curve ${progress.toFixed(1)}%`}
                 </div>
               </Link>
             );

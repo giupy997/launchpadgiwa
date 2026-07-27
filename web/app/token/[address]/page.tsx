@@ -20,11 +20,11 @@ export default function TokenPage({ params }: { params: { address: string } }) {
     query: { refetchInterval: 5_000 },
   });
 
-  if (isLoading || !data) return <p className="text-zinc-500">Caricamento…</p>;
+  if (isLoading || !data) return <p className="text-zinc-500">Loading…</p>;
 
   const [nameR, symbolR, curveR] = data;
   if (curveR.status !== "success" || (curveR.result as readonly unknown[])[0] === 0n) {
-    return <p className="text-zinc-500">Token non trovato su questo launchpad.</p>;
+    return <p className="text-zinc-500">Token not found on this launchpad.</p>;
   }
 
   const name = nameR.status === "success" ? (nameR.result as string) : "?";
@@ -57,10 +57,10 @@ export default function TokenPage({ params }: { params: { address: string } }) {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Stat label="Prezzo" value={`${fmtEth(spotPrice(curve), 12)} ETH`} />
-          <Stat label="Raccolti" value={`${fmtEth(realEth)} ETH`} />
-          <Stat label="Venduti" value={fmtTokens(sold)} />
-          <Stat label="Curva" value={graduated ? "Graduata" : `${progress.toFixed(1)}%`} />
+          <Stat label="Price" value={`${fmtEth(spotPrice(curve), 12)} ETH`} />
+          <Stat label="Raised" value={`${fmtEth(realEth)} ETH`} />
+          <Stat label="Sold" value={fmtTokens(sold)} />
+          <Stat label="Curve" value={graduated ? "Graduated" : `${progress.toFixed(1)}%`} />
         </div>
 
         <div>
@@ -71,7 +71,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
             />
           </div>
           <p className="mt-2 text-xs text-zinc-500">
-            Alla vendita di 800M di token la curva chiude e la liquidità migra sul DEX.
+            Once 800M tokens are sold the curve closes and liquidity migrates to the DEX.
           </p>
         </div>
       </div>

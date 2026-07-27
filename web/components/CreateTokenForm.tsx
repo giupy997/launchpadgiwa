@@ -30,13 +30,13 @@ export function CreateTokenForm() {
 
   return (
     <section className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 max-w-xl mx-auto">
-      <h2 className="font-semibold mb-4">🚀 Crea un token</h2>
+      <h2 className="font-semibold mb-4">🚀 Create a token</h2>
       <form onSubmit={submit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nome (es. Giwa Cat)"
+            placeholder="Name (e.g. Giwa Cat)"
             required
             maxLength={32}
             className="rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm focus:border-emerald-500 outline-none"
@@ -44,7 +44,7 @@ export function CreateTokenForm() {
           <input
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
-            placeholder="Ticker (es. GCAT)"
+            placeholder="Ticker (e.g. GCAT)"
             required
             maxLength={10}
             className="rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm uppercase focus:border-emerald-500 outline-none"
@@ -53,7 +53,7 @@ export function CreateTokenForm() {
         <input
           value={initialBuy}
           onChange={(e) => setInitialBuy(e.target.value)}
-          placeholder="Acquisto iniziale in ETH (opzionale)"
+          placeholder="Initial buy in ETH (optional)"
           type="number"
           step="any"
           min="0"
@@ -65,20 +65,20 @@ export function CreateTokenForm() {
           className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-40"
         >
           {!isConnected
-            ? "Connetti il wallet per lanciare"
+            ? "Connect wallet to launch"
             : isPending
-              ? "Firma nel wallet…"
+              ? "Sign in wallet…"
               : isConfirming
-                ? "In conferma…"
-                : "Lancia il token"}
+                ? "Confirming…"
+                : "Launch token"}
         </button>
       </form>
 
       {isSuccess && hash && (
         <p className="mt-3 text-sm text-emerald-400">
-          Token creato!{" "}
+          Token created!{" "}
           <a href={`${EXPLORER}/tx/${hash}`} target="_blank" className="underline">
-            Vedi transazione
+            View transaction
           </a>{" "}
           <button onClick={() => reset()} className="text-zinc-500 underline ml-2">
             ok
