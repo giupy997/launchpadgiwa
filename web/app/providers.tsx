@@ -12,7 +12,18 @@ export function Providers({
   children: ReactNode;
   initialState?: State;
 }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 4_000, // avoid duplicate fetches across components
+            refetchOnWindowFocus: false,
+            retry: 2,
+          },
+        },
+      })
+  );
   return (
     <WagmiProvider config={config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

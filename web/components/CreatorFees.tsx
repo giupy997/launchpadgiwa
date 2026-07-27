@@ -7,13 +7,14 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi } from "@/lib/abi";
-import { useLaunchpadAddress } from "@/lib/hooks";
+import { useLaunchpadAddress, useAppChain } from "@/lib/hooks";
 import { fmtEth } from "@/lib/format";
 
 /** Accrued creator fee earnings (60% of trade fees) with a claim button.
  *  Renders nothing on chains whose deployment predates creator fees. */
 export function CreatorFees() {
   const pad = useLaunchpadAddress();
+  const appChainId = useAppChain().id;
   const { address: user } = useAccount();
 
   const { data: accrued, isError } = useReadContract({
@@ -42,7 +43,7 @@ export function CreatorFees() {
           <button
             onClick={() => {
               reset();
-              writeContract({ address: pad, abi: launchpadAbi, functionName: "claimCreatorFees" });
+              writeContract({ address: pad, abi: launchpadAbi, functionName: "claimCreatorFees", chainId: appChainId });
             }}
             disabled={isPending || isConfirming}
             className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black hover:bg-zinc-200 disabled:opacity-40"

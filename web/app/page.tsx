@@ -54,12 +54,12 @@ export default function Explore() {
           <h2 className="font-mono text-sm font-semibold tracking-[0.2em] uppercase text-zinc-400">
             Explore {count > 0 && <span className="text-zinc-600">({count})</span>}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name / ticker"
-              className="rounded-full bg-black border border-zinc-700 px-4 py-1.5 text-sm focus:border-white outline-none placeholder:text-zinc-600 w-48"
+              className="rounded-full bg-black border border-zinc-700 px-4 py-1.5 text-sm focus:border-white outline-none placeholder:text-zinc-600 flex-1 sm:flex-none sm:w-48 min-w-0"
             />
             <select
               value={sort}
@@ -73,7 +73,23 @@ export default function Explore() {
           </div>
         </div>
 
-        {isLoading && <p className="text-zinc-500">Loading from chain…</p>}
+        {isLoading && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-zinc-800 bg-black p-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-lg bg-zinc-900" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-24 rounded bg-zinc-900" />
+                    <div className="h-2 w-12 rounded bg-zinc-900" />
+                  </div>
+                </div>
+                <div className="mt-4 h-2 w-full rounded bg-zinc-900" />
+                <div className="mt-3 h-1 w-full rounded bg-zinc-900" />
+              </div>
+            ))}
+          </div>
+        )}
         {!isLoading && sorted.length === 0 && (
           <p className="text-zinc-500">
             {q ? "No tokens match your search." : "No tokens yet. Be the first to launch."}

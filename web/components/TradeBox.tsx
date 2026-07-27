@@ -9,7 +9,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useExplorer } from "@/lib/hooks";
+import { useLaunchpadAddress, useExplorer, useAppChain } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
 
 const SLIPPAGE_BPS = 100n; // 1% tolerance on the quote
@@ -27,6 +27,7 @@ export function TradeBox({
   const deployed = !!padMaybe;
   const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
+  const appChainId = useAppChain().id;
   const { address: user, isConnected } = useAccount();
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
@@ -83,6 +84,7 @@ export function TradeBox({
         address: pad,
         abi: launchpadAbi,
         functionName: "buy",
+        chainId: appChainId,
         args: [token, buyQuote !== undefined ? withSlippage(buyQuote as bigint) : 0n],
         value: parsed,
       });
@@ -91,6 +93,7 @@ export function TradeBox({
         address: token,
         abi: launchTokenAbi,
         functionName: "approve",
+        chainId: appChainId,
         args: [pad, parsed],
       });
     } else {
@@ -98,6 +101,7 @@ export function TradeBox({
         address: pad,
         abi: launchpadAbi,
         functionName: "sell",
+        chainId: appChainId,
         args: [token, parsed, sellQuote !== undefined ? withSlippage(sellQuote as bigint) : 0n],
       });
     }

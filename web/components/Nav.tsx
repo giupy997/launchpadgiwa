@@ -14,14 +14,14 @@ const ITEMS = [
 export function Nav() {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1 font-mono text-xs tracking-widest uppercase overflow-x-auto">
+    <nav className="hidden md:flex gap-0.5 sm:gap-1 font-mono text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase overflow-x-auto no-scrollbar">
       {ITEMS.map((it) => {
         const active = it.href === "/" ? pathname === "/" : pathname.startsWith(it.href);
         return (
           <Link
             key={it.href}
             href={it.href}
-            className={`rounded-full px-3.5 py-1.5 whitespace-nowrap transition-colors ${
+            className={`rounded-full px-2.5 sm:px-3.5 py-1.5 whitespace-nowrap transition-colors ${
               active
                 ? "bg-white text-black"
                 : "text-zinc-400 hover:text-white"

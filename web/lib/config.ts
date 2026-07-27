@@ -58,6 +58,11 @@ export const LAUNCHPAD_DEPLOY_BLOCK: Record<number, bigint> = {
 export const L1_STANDARD_BRIDGE: `0x${string}` =
   "0x77b2ffc0F57598cAe1DB76cb398059cF5d10A7E7";
 
+// batch: true coalesces JSON-RPC requests fired in the same tick into a
+// single HTTP call — with multicall batching below it cuts RPC round trips
+// dramatically (every card/stat read used to be its own request).
+const transport = () => http(undefined, { batch: true });
+
 export const config = createConfig({
   // Cookie-backed state + ssr: the server renders with the persisted chain,
   // so selection survives reloads without hydration mismatches.
@@ -65,10 +70,11 @@ export const config = createConfig({
   storage: createStorage({ storage: cookieStorage }),
   chains: [giwaSepolia, robinhood, sepolia, mainnet],
   connectors: [injected()],
+  batch: { multicall: { wait: 16 } },
   transports: {
-    [giwaSepolia.id]: http(),
-    [robinhood.id]: http(),
-    [sepolia.id]: http(),
-    [mainnet.id]: http(),
+    [giwaSepolia.id]: transport(),
+    [robinhood.id]: transport(),
+    [sepolia.id]: transport(),
+    [mainnet.id]: transport(),
   },
 });

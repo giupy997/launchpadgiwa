@@ -44,7 +44,7 @@ export function TradeFeed({
             <span className="flex-1 text-right text-zinc-300">
               {fmtTokens(t.tokens)} {symbol}
             </span>
-            <span className="w-28 text-right text-zinc-500">{fmtEth(t.eth)} ETH</span>
+            <span className="hidden sm:block w-28 text-right text-zinc-500">{fmtEth(t.eth)} ETH</span>
             <a
               href={`${explorer}/tx/${t.tx}`}
               target="_blank"

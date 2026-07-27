@@ -34,7 +34,27 @@ export default function TokenPage({ params }: { params: { address: string } }) {
     query: { refetchInterval: 5_000 },
   });
 
-  if (isLoading || !data) return <p className="text-zinc-500">Loading…</p>;
+  if (isLoading || !data)
+    return (
+      <div className="grid gap-8 lg:grid-cols-[1fr_360px] animate-pulse">
+        <div className="space-y-6">
+          <div className="flex gap-4">
+            <div className="w-[72px] h-[72px] rounded-lg bg-zinc-900" />
+            <div className="space-y-2 pt-2">
+              <div className="h-5 w-40 rounded bg-zinc-900" />
+              <div className="h-3 w-24 rounded bg-zinc-900" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-lg bg-zinc-900" />
+            ))}
+          </div>
+          <div className="h-40 rounded-xl bg-zinc-900" />
+        </div>
+        <div className="h-64 rounded-xl bg-zinc-900" />
+      </div>
+    );
 
   const [nameR, symbolR, curveR, metaR] = data;
   if (curveR.status !== "success" || (curveR.result as readonly unknown[])[0] === 0n) {
@@ -58,7 +78,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-      <div className="space-y-6">
+      <div className="space-y-6 order-2 lg:order-1">
         <div className="flex items-start gap-4">
           <TokenLogo uri={meta.logoURI} symbol={symbol} size={72} />
           <div>
@@ -122,7 +142,9 @@ export default function TokenPage({ params }: { params: { address: string } }) {
         />
       </div>
 
-      <TradeBox token={token} symbol={symbol} graduated={curve.graduated} />
+      <div className="order-1 lg:order-2">
+        <TradeBox token={token} symbol={symbol} graduated={curve.graduated} />
+      </div>
     </div>
   );
 }

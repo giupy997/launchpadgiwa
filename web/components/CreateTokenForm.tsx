@@ -4,7 +4,7 @@ import { useState } from "react";
 import { parseEther } from "viem";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { launchpadAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useExplorer } from "@/lib/hooks";
+import { useLaunchpadAddress, useExplorer, useAppChain } from "@/lib/hooks";
 import { TokenLogo } from "@/components/TokenLogo";
 import { processLogoFile, dataUriBytes } from "@/lib/image";
 
@@ -16,6 +16,7 @@ export function CreateTokenForm() {
   const deployed = !!padMaybe;
   const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
+  const appChainId = useAppChain().id;
   const { isConnected } = useAccount();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -49,6 +50,7 @@ export function CreateTokenForm() {
       address: pad,
       abi: launchpadAbi,
       functionName: "createToken",
+      chainId: appChainId,
       args: [
         name.trim(),
         symbol.trim().toUpperCase(),
@@ -116,7 +118,7 @@ export function CreateTokenForm() {
           {logoError && <p className="text-xs text-zinc-500">⚠ {logoError}</p>}
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             value={website}
             onChange={(e) => setWebsite(e.target.value)}

@@ -9,7 +9,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useTokens, useExplorer } from "@/lib/hooks";
+import { useLaunchpadAddress, useTokens, useExplorer, useAppChain } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
 import { TokenLogo } from "@/components/TokenLogo";
 import { NotDeployedNotice } from "@/components/NotDeployedNotice";
@@ -27,6 +27,7 @@ export default function SwapPage() {
   const deployed = !!padMaybe;
   const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
+  const appChainId = useAppChain().id;
   const { address: user, isConnected } = useAccount();
   const { tokens } = useTokens();
   const live = tokens.filter((t) => !t.curve.graduated);
@@ -98,6 +99,7 @@ export default function SwapPage() {
         address: pad,
         abi: launchpadAbi,
         functionName: "buy",
+        chainId: appChainId,
         args: [to, minOut((buyQuote as bigint | undefined) ?? 0n)],
         value: ethIn,
       });
@@ -120,6 +122,7 @@ export default function SwapPage() {
         address: pad,
         abi: launchpadAbi,
         functionName: "buy",
+        chainId: appChainId,
         args: [to, minOut((buyQuote as bigint | undefined) ?? 0n)],
         value: parsed,
       });
@@ -128,6 +131,7 @@ export default function SwapPage() {
         address: from,
         abi: launchTokenAbi,
         functionName: "approve",
+        chainId: appChainId,
         args: [pad, parsed],
       });
     } else if (from !== ETH) {
@@ -136,6 +140,7 @@ export default function SwapPage() {
         address: pad,
         abi: launchpadAbi,
         functionName: "sell",
+        chainId: appChainId,
         args: [from, parsed, minOut((sellQuote as bigint | undefined) ?? 0n)],
       });
     }

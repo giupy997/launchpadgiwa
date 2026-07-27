@@ -8,6 +8,7 @@ import { Providers } from "./providers";
 import { ConnectButton } from "@/components/ConnectButton";
 import { ChainSwitcher } from "@/components/ChainSwitcher";
 import { Nav } from "@/components/Nav";
+import { BottomNav } from "@/components/BottomNav";
 import Link from "next/link";
 
 const geistSans = localFont({
@@ -37,7 +38,7 @@ export default function RootLayout({
       >
         <Providers initialState={initialState}>
           <header className="border-b border-zinc-800 sticky top-0 bg-black/90 backdrop-blur z-10">
-            <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between gap-4">
+            <div className="mx-auto max-w-5xl px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
               <Link
                 href="/"
                 className="font-mono text-lg font-bold tracking-[0.25em] uppercase shrink-0"
@@ -51,9 +52,9 @@ export default function RootLayout({
               </div>
             </div>
           </header>
-          <main className="mx-auto max-w-5xl px-4 py-10">{children}</main>
+          <main className="mx-auto max-w-5xl px-4 py-8 md:py-10 pb-24 md:pb-10">{children}</main>
           <footer className="border-t border-zinc-900">
-            <div className="mx-auto max-w-5xl px-4 py-8 text-xs text-zinc-600 font-mono tracking-wide">
+            <div className="mx-auto max-w-5xl px-4 py-8 mb-14 md:mb-0 text-xs text-zinc-600 font-mono tracking-wide">
               NOTUS · MULTICHAIN ·{" "}
               <a
                 className="underline hover:text-zinc-300"
@@ -64,6 +65,7 @@ export default function RootLayout({
               </a>
             </div>
           </footer>
+          <BottomNav />
         </Providers>
       </body>
     </html>
