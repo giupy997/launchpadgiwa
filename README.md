@@ -14,9 +14,16 @@ future multichain deployments (Monad, MegaETH, ...).
     until graduation
   - `src/interfaces/IDexMigrator.sol` — pluggable DEX adapter (one per chain)
 - `web/` — Next.js 14 + wagmi v2 + viem frontend
-  - Home: token creation and on-chain token list (multicall, 5s refresh)
+  - `/` Explore: on-chain token list (multicall, 5s refresh) with search
+    and sorting
+  - `/create`: token creation with logo (1:1) and social links
   - `/token/[address]`: curve stats, progress bar, buy/sell box with
     on-chain quotes, automatic approve and 1% slippage guard
+  - `/swap`: ETH ↔ token swaps on the curve; token → token routed
+    through ETH in two transactions
+  - `/bridge`: ETH deposits Ethereum Sepolia → GIWA via the OP Stack
+    Standard Bridge (L1StandardBridge `0x77b2ffc0F57598cAe1DB76cb398059cF5d10A7E7`)
+  - `/profile`: connected wallet holdings and created tokens
 
 ## Curve parameters
 

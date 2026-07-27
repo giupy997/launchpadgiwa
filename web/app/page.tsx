@@ -1,17 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useTokens, spotPrice, curveProgress } from "@/lib/hooks";
-import { fmtEth, shortAddr } from "@/lib/format";
-import { CreateTokenForm } from "@/components/CreateTokenForm";
-import { TokenLogo } from "@/components/TokenLogo";
+import { useState } from "react";
+import { useTokens } from "@/lib/hooks";
+import { TokenCard } from "@/components/TokenCard";
 
-export default function Home() {
+type Sort = "newest" | "raised" | "progress";
+
+export default function Explore() {
   const { tokens, isLoading, count } = useTokens();
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<Sort>("newest");
+
+  const q = query.trim().toLowerCase();
+  const filtered = tokens.filter(
+    (t) =>
+      !q ||
+      t.name.toLowerCase().includes(q) ||
+      t.symbol.toLowerCase().includes(q) ||
+      t.address.toLowerCase() === q
+  );
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === "raised") return b.curve.realEth > a.curve.realEth ? 1 : -1;
+    if (sort === "progress") return b.curve.sold > a.curve.sold ? 1 : -1;
+    return 0; // newest: keep hook order
+  });
 
   return (
-    <div className="space-y-14">
-      <section className="text-center space-y-4 py-8">
+    <div className="space-y-10">
+      <section className="text-center space-y-4 py-6">
         <h1 className="font-mono text-3xl sm:text-4xl font-bold tracking-[0.15em] uppercase leading-snug">
           Launch your token
           <br />
@@ -21,55 +38,49 @@ export default function Home() {
           Transparent bonding curve: price rises with every buy, automatic
           graduation at 800M tokens sold, liquidity migrated to the DEX.
         </p>
+        <Link
+          href="/create"
+          className="inline-block rounded-full bg-white px-6 py-2.5 font-semibold text-black hover:bg-zinc-200"
+        >
+          Create a token
+        </Link>
       </section>
 
-      <CreateTokenForm />
-
       <section>
-        <h2 className="font-mono text-sm font-semibold tracking-[0.2em] uppercase mb-5 text-zinc-400">
-          Launched tokens {count > 0 && <span className="text-zinc-600">({count})</span>}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <h2 className="font-mono text-sm font-semibold tracking-[0.2em] uppercase text-zinc-400">
+            Explore {count > 0 && <span className="text-zinc-600">({count})</span>}
+          </h2>
+          <div className="flex gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name / ticker"
+              className="rounded-full bg-black border border-zinc-700 px-4 py-1.5 text-sm focus:border-white outline-none placeholder:text-zinc-600 w-48"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as Sort)}
+              className="rounded-full bg-black border border-zinc-700 px-3 py-1.5 text-sm focus:border-white outline-none text-zinc-300"
+            >
+              <option value="newest">Newest</option>
+              <option value="raised">Most raised</option>
+              <option value="progress">Curve progress</option>
+            </select>
+          </div>
+        </div>
 
         {isLoading && <p className="text-zinc-500">Loading from chain…</p>}
-        {!isLoading && tokens.length === 0 && (
-          <p className="text-zinc-500">No tokens yet. Be the first to launch.</p>
+        {!isLoading && sorted.length === 0 && (
+          <p className="text-zinc-500">
+            {q ? "No tokens match your search." : "No tokens yet. Be the first to launch."}
+          </p>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tokens.map((t) => {
-            const progress = curveProgress(t.curve);
-            return (
-              <Link
-                key={t.address}
-                href={`/token/${t.address}`}
-                className="rounded-xl border border-zinc-800 bg-black p-4 hover:border-white transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <TokenLogo uri={t.meta.logoURI} symbol={t.symbol} size={44} />
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate">{t.name}</div>
-                    <div className="font-mono text-xs text-zinc-400">${t.symbol}</div>
-                  </div>
-                </div>
-                <div className="mt-3 text-xs text-zinc-500">
-                  creator {shortAddr(t.curve.creator)}
-                </div>
-                <div className="mt-3 flex justify-between text-sm">
-                  <span className="text-zinc-300">{fmtEth(spotPrice(t.curve), 12)} ETH</span>
-                  <span className="text-zinc-500">raised {fmtEth(t.curve.realEth)} ETH</span>
-                </div>
-                <div className="mt-3 h-1 rounded bg-zinc-800 overflow-hidden">
-                  <div
-                    className="h-full bg-white"
-                    style={{ width: `${Math.min(progress, 100)}%` }}
-                  />
-                </div>
-                <div className="mt-1.5 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-                  {t.curve.graduated ? "Graduated" : `curve ${progress.toFixed(1)}%`}
-                </div>
-              </Link>
-            );
-          })}
+          {sorted.map((t) => (
+            <TokenCard key={t.address} token={t} />
+          ))}
         </div>
       </section>
     </div>
