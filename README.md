@@ -12,7 +12,10 @@ il deploy multichain futuro (Monad, MegaETH, ...).
   - `src/LaunchToken.sol` — ERC-20 creato dal launchpad; transfer bloccati fino
     alla graduation
   - `src/interfaces/IDexMigrator.sol` — adapter DEX pluggabile (uno per chain)
-- `web/` — frontend (da fare: Next.js + wagmi/viem)
+- `web/` — frontend Next.js 14 + wagmi v2 + viem
+  - Home: creazione token e lista dal contratto (multicall, refresh 5s)
+  - `/token/[address]`: stat della curva, progress bar, box buy/sell con
+    quote on-chain, approve automatico e slippage guard 1%
 
 ## Parametri della curva
 
@@ -45,6 +48,10 @@ cd contracts
 forge test                       # test suite (17 test, incluso fuzz)
 ```
 
+```bash
+cd web && npm install && npm run dev   # frontend su http://localhost:3000
+```
+
 Deploy su GIWA Sepolia (richiede `.env` con `PRIVATE_KEY`, vedi `.env.example`):
 
 ```bash
@@ -57,7 +64,9 @@ cd contracts && source .env && forge script script/Deploy.s.sol --rpc-url giwa_s
 - [x] Smoke test on-chain: token di prova [`TEST` 0x7Fc8...1305](https://sepolia-explorer.giwa.io/address/0x7Fc8d6f3AD8b93F771Cd0Dadd458A495c42F1305) creato con buy iniziale, curva e prezzi verificati
 - [ ] Adapter `IDexMigrator` per un DEX su GIWA (da individuare quando
       l'ecosistema mainnet sarà live)
-- [ ] Frontend Next.js + wagmi/viem
-- [ ] Indexer eventi (creazioni, trade) per feed e classifiche
+- [x] Frontend Next.js + wagmi/viem (crea, lista, compra, vendi)
+- [x] Verifica sorgente su Blockscout (Launchpad e token TEST)
+- [ ] Indexer eventi (creazioni, trade) per feed, classifiche e grafico prezzi
+- [ ] Test end-to-end del frontend con wallet (MetaMask) su GIWA Sepolia
 - [ ] Verifica policy di deploy permissionless su GIWA mainnet
 - [ ] Review legale (MiCA) prima del lancio pubblico
