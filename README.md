@@ -52,9 +52,9 @@ future multichain deployments (Monad, MegaETH, ...).
 
 | Chain | Contract | Address |
 |---|---|---|
-| GIWA Sepolia (91342) | Launchpad | [`0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81`](https://sepolia-explorer.giwa.io/address/0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81) — v6 |
-| Robinhood Chain (4663) | Launchpad | [`0xD74910600799db791e50BaBF3C7493AAd8A3B258`](https://robinhoodchain.blockscout.com/address/0xD74910600799db791e50BaBF3C7493AAd8A3B258) — v6 |
-| Robinhood Chain (4663) | UniV3Migrator | [`0xF066f4E454d1A06829eA836197eEf7dedACA7dfe`](https://robinhoodchain.blockscout.com/address/0xF066f4E454d1A06829eA836197eEf7dedACA7dfe) — wired, auto-migration live |
+| GIWA Sepolia (91342) | Launchpad | [`0xD04C4b497139E174d832058F3b94F700E02c72E0`](https://sepolia-explorer.giwa.io/address/0xD04C4b497139E174d832058F3b94F700E02c72E0) — v7 |
+| Robinhood Chain (4663) | Launchpad | [`0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81`](https://robinhoodchain.blockscout.com/address/0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81) — v7 |
+| Robinhood Chain (4663) | UniV3Migrator | [`0xD04C4b497139E174d832058F3b94F700E02c72E0`](https://robinhoodchain.blockscout.com/address/0xD04C4b497139E174d832058F3b94F700E02c72E0) — wired |
 
 (previous GIWA deployments: `0x1f3F...fC73` no creator fees, `0xf71b...9cC1` no metadata)
 

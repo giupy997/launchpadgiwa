@@ -15,8 +15,8 @@ interface IUniV3FactoryView {
 /// NOTE: targets the deployed production addresses — update PAD/MIG after
 /// each redeploy. Run with: RUN_FORK_LIVE=true forge test --match-contract LiveGraduation -vv
 contract LiveGraduationForkTest is Test {
-    Launchpad constant PAD = Launchpad(0xD74910600799db791e50BaBF3C7493AAd8A3B258);
-    UniV3Migrator constant MIG = UniV3Migrator(0xF066f4E454d1A06829eA836197eEf7dedACA7dfe);
+    Launchpad constant PAD = Launchpad(0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81);
+    UniV3Migrator constant MIG = UniV3Migrator(0xD04C4b497139E174d832058F3b94F700E02c72E0);
     address constant FACTORY = 0x1f7d7550B1b028f7571E69A784071F0205FD2EfA;
     address constant WETH = 0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73;
 
