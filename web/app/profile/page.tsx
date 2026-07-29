@@ -28,6 +28,11 @@ export default function ProfilePage() {
   if (!isConnected || !user) {
     return (
       <div className="text-center py-20 space-y-4">
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 pointer-events-none bg-[url('/profile-bg.jpg')] bg-cover bg-center opacity-25"
+      />
+
         <h1 className="font-mono text-2xl font-bold tracking-[0.15em] uppercase">Profile</h1>
         <p className="text-zinc-500">Connect your wallet to see your tokens and holdings.</p>
       </div>
@@ -51,6 +56,11 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-12">
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 pointer-events-none bg-[url('/profile-bg.jpg')] bg-cover bg-center opacity-25"
+      />
+
       <section className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-mono text-2xl font-bold tracking-[0.15em] uppercase">Profile</h1>
