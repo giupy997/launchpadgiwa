@@ -36,7 +36,7 @@ export function TokenLogo({
       height={size}
       onError={() => setFailed(true)}
       style={{ width: size, height: size }}
-      className="rounded-lg object-cover aspect-square border border-zinc-800 grayscale hover:grayscale-0 transition"
+      className="rounded-lg object-cover aspect-square border border-zinc-800"
     />
   );
 }
