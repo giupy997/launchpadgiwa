@@ -12,7 +12,8 @@ interface IUniV3FactoryView {
 
 /// End-to-end graduation check against the PRODUCTION contracts deployed on
 /// Robinhood Chain mainnet (fork simulation — no real funds spent).
-/// Run with: RUN_FORK=true forge test --match-contract LiveGraduation -vv
+/// NOTE: targets the deployed production addresses — update PAD/MIG after
+/// each redeploy. Run with: RUN_FORK_LIVE=true forge test --match-contract LiveGraduation -vv
 contract LiveGraduationForkTest is Test {
     Launchpad constant PAD = Launchpad(0xD74910600799db791e50BaBF3C7493AAd8A3B258);
     UniV3Migrator constant MIG = UniV3Migrator(0xF066f4E454d1A06829eA836197eEf7dedACA7dfe);
@@ -23,7 +24,7 @@ contract LiveGraduationForkTest is Test {
     address whale = makeAddr("whale");
 
     function setUp() public {
-        if (!vm.envOr("RUN_FORK", false)) {
+        if (!vm.envOr("RUN_FORK_LIVE", false)) {
             skipAll = true;
             return;
         }
@@ -44,12 +45,12 @@ contract LiveGraduationForkTest is Test {
         vm.startPrank(whale);
         address token = PAD.createToken(
             "Dry Run", "DRY", 0,
-            Launchpad.TokenMetadata("", "", "", "", "", "graduation dry run")
+            Launchpad.TokenMetadata("", "", "", "", "", "graduation dry run"), address(0)
         );
         PAD.buy{value: 50 ether}(token, 0);
         vm.stopPrank();
 
-        (,, uint256 realEth, uint256 sold, bool graduated,) = PAD.curves(token);
+        (,, uint256 realEth, uint256 sold, bool graduated,,) = PAD.curves(token);
         assertTrue(graduated, "graduated");
         assertEq(sold, PAD.CURVE_SUPPLY(), "curve sold out");
         assertEq(realEth, 0, "curve ETH fully migrated");
@@ -62,7 +63,7 @@ contract LiveGraduationForkTest is Test {
         assertGt(IERC20(token).balanceOf(pool), 190_000_000e18, "DEX reserve in pool");
 
         // fee plumbing worked along the way
-        assertGt(PAD.creatorFees(whale), 0, "creator fees accrued");
+        assertGt(PAD.creatorFees(whale, address(0)), 0, "creator fees accrued");
         assertGt(PAD.cashbackOf(token, whale), 0, "holder cashback accrued");
 
         // LP fee collection callable

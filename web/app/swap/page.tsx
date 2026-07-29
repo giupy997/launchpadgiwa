@@ -9,7 +9,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useTokens, useExplorer, useAppChain } from "@/lib/hooks";
+import { useLaunchpadAddress, useTokens, useExplorer, useAppChain, ZERO_ADDRESS } from "@/lib/hooks";
 import { fmtEth, fmtTokens } from "@/lib/format";
 import { NotDeployedNotice } from "@/components/NotDeployedNotice";
 import { SlippageControl, useSlippageBps } from "@/components/SlippageControl";
@@ -27,7 +27,7 @@ export default function SwapPage() {
   const appChainId = useAppChain().id;
   const { address: user, isConnected } = useAccount();
   const { tokens } = useTokens();
-  const live = tokens.filter((t) => !t.curve.graduated);
+  const live = tokens.filter((t) => !t.curve.graduated && t.curve.quoteAsset === ZERO_ADDRESS);
 
   const [from, setFrom] = useState<Side>(ETH);
   const [to, setTo] = useState<Side>(ETH);
@@ -270,7 +270,8 @@ export default function SwapPage() {
 
       {live.length === 0 && (
         <p className="text-center text-sm text-zinc-500">
-          No live tokens on the curve to swap yet.
+          No live ETH-paired tokens on the curve to swap yet. Asset-paired
+          coins trade from their token page.
         </p>
       )}
 

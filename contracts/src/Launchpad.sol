@@ -43,13 +43,20 @@ contract Launchpad is Ownable, ReentrancyGuard {
     address public treasury;
     IDexMigrator public migrator;
 
-    mapping(address creator => uint256) public creatorFees;
+    /// Creator fee accruals per recipient per asset (address(0) = ETH).
+    mapping(address recipient => mapping(address asset => uint256)) public creatorFees;
 
-    /// Holder cashback: a per-token rewards accumulator (1e18 precision).
+    /// Quote assets enabled for new curves: virtual reserve per asset
+    /// (position-sizes the curve in that asset's units/decimals). 0 = disabled.
+    mapping(address asset => uint256) public quoteVirtualReserve;
+
+    /// Holder cashback: a per-token rewards accumulator (1e30 precision — high
+    /// enough that low-decimal quote assets like 6-decimal stables never round
+    /// the per-share increment to zero against 1e18-decimal token supplies).
     /// Every balance change settles the affected wallets via the token's
     /// transfer hook, so pro-rata accounting stays exact even after
     /// graduation when transfers are free.
-    uint256 private constant ACC_PRECISION = 1e18;
+    uint256 private constant ACC_PRECISION = 1e30;
     mapping(address token => uint256) public accCashbackPerShare;
     mapping(address token => mapping(address holder => uint256)) public pendingCashback;
     mapping(address token => mapping(address holder => uint256)) public cashbackDebt;
@@ -57,12 +64,13 @@ contract Launchpad is Ownable, ReentrancyGuard {
     // ---------------------------------------------------------------- state
 
     struct Curve {
-        uint256 vEth; //     virtual ETH reserve
+        uint256 vEth; //     virtual quote reserve (ETH or the quote asset)
         uint256 vToken; //   virtual token reserve
-        uint256 realEth; //  ETH actually held for this curve
+        uint256 realEth; //  quote actually held for this curve
         uint256 sold; //     tokens sold so far
         bool graduated;
         address creator;
+        address quoteAsset; // address(0) = native ETH, else whitelisted ERC-20
     }
 
     /// Off-chain presentation data, stored on-chain so the frontend needs no
@@ -103,6 +111,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
     event FeeSplitUpdated(uint256 creatorFeeShareBps, uint256 holderCashbackBps);
     event TreasuryUpdated(address treasury);
     event MigratorUpdated(address migrator);
+    event QuoteAssetUpdated(address indexed asset, uint256 virtualReserve);
 
     // ---------------------------------------------------------------- errors
 
@@ -115,6 +124,8 @@ contract Launchpad is Ownable, ReentrancyGuard {
     error FeeTooHigh();
     error MigratorNotSet();
     error EthTransferFailed();
+    error QuoteAssetNotEnabled();
+    error WrongPayment();
 
     constructor(address treasury_) Ownable(msg.sender) {
         treasury = treasury_;
@@ -128,25 +139,44 @@ contract Launchpad is Ownable, ReentrancyGuard {
         string calldata name,
         string calldata symbol,
         uint256 minTokensOut,
-        TokenMetadata calldata meta
+        TokenMetadata calldata meta,
+        address quoteAsset
     ) external payable nonReentrant returns (address token) {
+        uint256 vQuote = VIRTUAL_ETH;
+        if (quoteAsset != address(0)) {
+            vQuote = quoteVirtualReserve[quoteAsset];
+            if (vQuote == 0) revert QuoteAssetNotEnabled();
+        }
         token = address(new LaunchToken(name, symbol, TOTAL_SUPPLY));
         curves[token] = Curve({
-            vEth: VIRTUAL_ETH,
+            vEth: vQuote,
             vToken: VIRTUAL_TOKEN,
             realEth: 0,
             sold: 0,
             graduated: false,
-            creator: msg.sender
+            creator: msg.sender,
+            quoteAsset: quoteAsset
         });
         tokenMetadata[token] = meta;
         allTokens.push(token);
         emit TokenCreated(token, msg.sender, name, symbol);
         emit MetadataUpdated(token, meta.logoURI, meta.website, meta.twitter, meta.telegram, meta.livestream);
 
-        if (msg.value > 0) {
-            _buy(token, msg.sender, msg.value, minTokensOut);
+        if (quoteAsset == address(0)) {
+            if (msg.value > 0) _buy(token, msg.sender, msg.value, minTokensOut);
+        } else if (msg.value > 0) {
+            revert WrongPayment();
         }
+    }
+
+    /// @notice Initial/dev buy helper for ERC-20 quoted curves.
+    function buyWithQuote(address token, uint256 amountIn, uint256 minTokensOut) external nonReentrant {
+        if (amountIn == 0) revert ZeroAmount();
+        Curve storage c = curves[token];
+        if (c.vEth == 0) revert UnknownToken();
+        if (c.quoteAsset == address(0)) revert WrongPayment();
+        IERC20(c.quoteAsset).safeTransferFrom(msg.sender, address(this), amountIn);
+        _buy(token, msg.sender, amountIn, minTokensOut);
     }
 
     /// @notice Redirect this token's creator fee share to another wallet
@@ -172,6 +202,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     function buy(address token, uint256 minTokensOut) external payable nonReentrant {
         if (msg.value == 0) revert ZeroAmount();
+        if (curves[token].quoteAsset != address(0)) revert WrongPayment();
         _buy(token, msg.sender, msg.value, minTokensOut);
     }
 
@@ -212,8 +243,8 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.sold += tokensOut;
 
         IERC20(token).safeTransfer(buyer, tokensOut);
-        _splitFee(token, c.creator, fee);
-        if (refund > 0) _sendEth(buyer, refund);
+        _splitFee(token, c.creator, c.quoteAsset, fee);
+        if (refund > 0) _payOut(c.quoteAsset, buyer, refund);
 
         emit Bought(token, buyer, ethIn - refund, tokensOut, fee);
 
@@ -260,8 +291,8 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.sold -= tokensIn;
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), tokensIn);
-        _splitFee(token, c.creator, fee);
-        _sendEth(msg.sender, ethToSeller);
+        _splitFee(token, c.creator, c.quoteAsset, fee);
+        _payOut(c.quoteAsset, msg.sender, ethToSeller);
 
         emit Sold(token, msg.sender, tokensIn, ethToSeller, fee);
     }
@@ -318,7 +349,12 @@ contract Launchpad is Ownable, ReentrancyGuard {
         c.realEth = 0;
 
         IERC20(token).safeTransfer(address(migrator), DEX_RESERVE);
-        migrator.migrate{value: ethAmount}(token, DEX_RESERVE);
+        if (c.quoteAsset == address(0)) {
+            migrator.migrate{value: ethAmount}(token, DEX_RESERVE, address(0), ethAmount);
+        } else {
+            IERC20(c.quoteAsset).safeTransfer(address(migrator), ethAmount);
+            migrator.migrate(token, DEX_RESERVE, c.quoteAsset, ethAmount);
+        }
 
         emit Migrated(token, DEX_RESERVE, ethAmount);
     }
@@ -327,12 +363,12 @@ contract Launchpad is Ownable, ReentrancyGuard {
 
     /// @notice Splits a trade fee: creator share and holder cashback accrue
     ///         for pull-withdrawal, the remainder goes straight to the treasury.
-    function _splitFee(address token, address creator, uint256 fee) internal {
+    function _splitFee(address token, address creator, address asset, uint256 fee) internal {
         uint256 creatorCut = (fee * creatorFeeShareBps) / FEE_DENOMINATOR;
         if (creatorCut > 0) {
             address recipient = feeRecipient[token];
             if (recipient == address(0)) recipient = creator;
-            creatorFees[recipient] += creatorCut;
+            creatorFees[recipient][asset] += creatorCut;
         }
         uint256 cashbackCut = (fee * holderCashbackBps) / FEE_DENOMINATOR;
         uint256 sold = curves[token].sold;
@@ -342,7 +378,7 @@ contract Launchpad is Ownable, ReentrancyGuard {
             // no holders yet: fold the cashback into the treasury share
             cashbackCut = 0;
         }
-        _sendEth(treasury, fee - creatorCut - cashbackCut);
+        _payOut(asset, treasury, fee - creatorCut - cashbackCut);
     }
 
     /// @notice Transfer hook called by LaunchTokens right after every balance
@@ -385,16 +421,16 @@ contract Launchpad is Ownable, ReentrancyGuard {
         uint256 amount = pendingCashback[token][msg.sender];
         if (amount == 0) revert ZeroAmount();
         pendingCashback[token][msg.sender] = 0;
-        _sendEth(msg.sender, amount);
+        _payOut(curves[token].quoteAsset, msg.sender, amount);
         emit CashbackClaimed(token, msg.sender, amount);
     }
 
-    /// @notice Withdraw the fees accrued by all tokens you created.
-    function claimCreatorFees() external nonReentrant {
-        uint256 amount = creatorFees[msg.sender];
+    /// @notice Withdraw the creator fees accrued in `asset` (address(0) = ETH).
+    function claimCreatorFees(address asset) external nonReentrant {
+        uint256 amount = creatorFees[msg.sender][asset];
         if (amount == 0) revert ZeroAmount();
-        creatorFees[msg.sender] = 0;
-        _sendEth(msg.sender, amount);
+        creatorFees[msg.sender][asset] = 0;
+        _payOut(asset, msg.sender, amount);
         emit CreatorFeesClaimed(msg.sender, amount);
     }
 
@@ -418,14 +454,26 @@ contract Launchpad is Ownable, ReentrancyGuard {
         emit TreasuryUpdated(newTreasury);
     }
 
+    /// @notice Enable (virtualReserve > 0) or disable (0) an ERC-20 quote
+    ///         asset for new curves. The virtual reserve sizes the curve in
+    ///         that asset's units (like 1.25 ETH does for native curves).
+    function setQuoteAsset(address asset, uint256 virtualReserve) external onlyOwner {
+        quoteVirtualReserve[asset] = virtualReserve;
+        emit QuoteAssetUpdated(asset, virtualReserve);
+    }
+
     function setMigrator(address newMigrator) external onlyOwner {
         migrator = IDexMigrator(newMigrator);
         emit MigratorUpdated(newMigrator);
     }
 
-    function _sendEth(address to, uint256 amount) internal {
+    function _payOut(address asset, address to, uint256 amount) internal {
         if (amount == 0) return;
-        (bool ok,) = to.call{value: amount}("");
-        if (!ok) revert EthTransferFailed();
+        if (asset == address(0)) {
+            (bool ok,) = to.call{value: amount}("");
+            if (!ok) revert EthTransferFailed();
+        } else {
+            IERC20(asset).safeTransfer(to, amount);
+        }
     }
 }

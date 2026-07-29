@@ -5,21 +5,41 @@ import {Test} from "forge-std/Test.sol";
 import {Launchpad} from "../src/Launchpad.sol";
 import {LaunchToken} from "../src/LaunchToken.sol";
 import {IDexMigrator} from "../src/interfaces/IDexMigrator.sol";
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract MockMigrator is IDexMigrator {
     address public lastToken;
     uint256 public lastTokenAmount;
+    address public lastQuoteAsset;
+    uint256 public lastQuoteAmount;
     uint256 public lastEthAmount;
 
-    function migrate(address token, uint256 tokenAmount) external payable {
+    function migrate(address token, uint256 tokenAmount, address quoteAsset, uint256 quoteAmount)
+        external
+        payable
+    {
         lastToken = token;
         lastTokenAmount = tokenAmount;
+        lastQuoteAsset = quoteAsset;
+        lastQuoteAmount = quoteAmount;
         lastEthAmount = msg.value;
     }
 }
 
+contract MockUSD is ERC20 {
+    constructor() ERC20("Mock USD", "mUSD") {}
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
+
 contract RevertingMigrator is IDexMigrator {
-    function migrate(address, uint256) external payable {
+    function migrate(address, uint256, address, uint256) external payable {
         revert("dex down");
     }
 }
@@ -52,7 +72,7 @@ contract LaunchpadTest is Test {
 
     function _create() internal returns (address) {
         vm.prank(alice);
-        return pad.createToken("Test Coin", "TEST", 0, _meta());
+        return pad.createToken("Test Coin", "TEST", 0, _meta(), address(0));
     }
 
     // ------------------------------------------------------------- creation
@@ -66,7 +86,7 @@ contract LaunchpadTest is Test {
 
     function test_createWithInitialBuy() public {
         vm.prank(alice);
-        address token = pad.createToken{value: 0.1 ether}("Test", "TST", 0, _meta());
+        address token = pad.createToken{value: 0.1 ether}("Test", "TST", 0, _meta(), address(0));
         assertGt(LaunchToken(token).balanceOf(alice), 0);
     }
 
@@ -107,10 +127,10 @@ contract LaunchpadTest is Test {
         assertEq(LaunchToken(token).balanceOf(bob), quoted);
         // 1% fee: 50% creator (alice), 30% holder cashback, 20% treasury
         assertEq(treasury.balance, 0.002 ether);
-        assertEq(pad.creatorFees(alice), 0.005 ether);
+        assertEq(pad.creatorFees(alice, address(0)), 0.005 ether);
         // bob is the only holder, so the whole cashback accrues to him
         assertApproxEqAbs(pad.cashbackOf(token, bob), 0.003 ether, 1e12);
-        (,, uint256 realEth,,,) = pad.curves(token);
+        (,, uint256 realEth,,,,) = pad.curves(token);
         assertEq(realEth, 0.99 ether);
     }
 
@@ -123,7 +143,7 @@ contract LaunchpadTest is Test {
         pad.sell(token, bal, 0);
         vm.stopPrank();
         // fees from both legs accrued to alice, none lost
-        assertGt(pad.creatorFees(alice), 0.005 ether); // buy fee + sell fee
+        assertGt(pad.creatorFees(alice, address(0)), 0.005 ether); // buy fee + sell fee
     }
 
     function test_claimCreatorFees() public {
@@ -131,19 +151,19 @@ contract LaunchpadTest is Test {
         vm.prank(bob);
         pad.buy{value: 1 ether}(token, 0);
 
-        uint256 accrued = pad.creatorFees(alice);
+        uint256 accrued = pad.creatorFees(alice, address(0));
         uint256 before = alice.balance;
         vm.prank(alice);
-        pad.claimCreatorFees();
+        pad.claimCreatorFees(address(0));
 
         assertEq(alice.balance - before, accrued);
-        assertEq(pad.creatorFees(alice), 0);
+        assertEq(pad.creatorFees(alice, address(0)), 0);
     }
 
     function test_claimRevertsWhenNothingAccrued() public {
         vm.prank(bob);
         vm.expectRevert(Launchpad.ZeroAmount.selector);
-        pad.claimCreatorFees();
+        pad.claimCreatorFees(address(0));
     }
 
     function test_feeRedirectAccruesToRecipient() public {
@@ -155,13 +175,13 @@ contract LaunchpadTest is Test {
         vm.prank(bob);
         pad.buy{value: 1 ether}(token, 0);
 
-        assertEq(pad.creatorFees(vault), 0.005 ether);
-        assertEq(pad.creatorFees(alice), 0);
+        assertEq(pad.creatorFees(vault, address(0)), 0.005 ether);
+        assertEq(pad.creatorFees(alice, address(0)), 0);
 
         // vault can claim
         uint256 before = vault.balance;
         vm.prank(vault);
-        pad.claimCreatorFees();
+        pad.claimCreatorFees(address(0));
         assertEq(vault.balance - before, 0.005 ether);
     }
 
@@ -175,7 +195,7 @@ contract LaunchpadTest is Test {
 
         vm.prank(bob);
         pad.buy{value: 1 ether}(token, 0);
-        assertEq(pad.creatorFees(alice), 0.005 ether);
+        assertEq(pad.creatorFees(alice, address(0)), 0.005 ether);
     }
 
     function test_onlyCreatorSetsFeeRecipient() public {
@@ -306,7 +326,7 @@ contract LaunchpadTest is Test {
         pad.sell(token, bal, 0);
         vm.stopPrank();
 
-        (,, uint256 realEth, uint256 sold,,) = pad.curves(token);
+        (,, uint256 realEth, uint256 sold,,,) = pad.curves(token);
         assertEq(sold, 0);
         // realEth keeps only rounding dust
         assertLt(realEth, 1e6);
@@ -335,7 +355,7 @@ contract LaunchpadTest is Test {
         address token = _create();
         _graduate(token);
 
-        (,,, uint256 sold, bool graduated,) = pad.curves(token);
+        (,,, uint256 sold, bool graduated,,) = pad.curves(token);
         assertTrue(graduated);
         assertEq(sold, pad.CURVE_SUPPLY());
         assertTrue(LaunchToken(token).graduated());
@@ -367,7 +387,7 @@ contract LaunchpadTest is Test {
         _graduate(token); // graduating buy should migrate in the same tx
         assertEq(migrator.lastToken(), token);
         assertEq(migrator.lastTokenAmount(), pad.DEX_RESERVE());
-        (,, uint256 realEthAfter,,,) = pad.curves(token);
+        (,, uint256 realEthAfter,,,,) = pad.curves(token);
         assertEq(realEthAfter, 0);
     }
 
@@ -377,9 +397,9 @@ contract LaunchpadTest is Test {
         address token = _create();
         _graduate(token); // must NOT revert even though the migrator does
 
-        (,,,, bool graduated,) = pad.curves(token);
+        (,,,, bool graduated,,) = pad.curves(token);
         assertTrue(graduated);
-        (,, uint256 raised,,,) = pad.curves(token);
+        (,, uint256 raised,,,,) = pad.curves(token);
         assertGt(raised, 0); // funds still parked, manual path available
 
         pad.setMigrator(address(migrator));
@@ -391,9 +411,9 @@ contract LaunchpadTest is Test {
         pad.setMigrator(address(0));
         address token = _create();
         _graduate(token);
-        (,,,, bool graduated,) = pad.curves(token);
+        (,,,, bool graduated,,) = pad.curves(token);
         assertTrue(graduated);
-        (,, uint256 raised,,,) = pad.curves(token);
+        (,, uint256 raised,,,,) = pad.curves(token);
         assertGt(raised, 0);
     }
 
@@ -401,7 +421,7 @@ contract LaunchpadTest is Test {
         pad.setMigrator(address(0)); // graduate without auto-migration
         address token = _create();
         _graduate(token);
-        (,, uint256 raised,,,) = pad.curves(token);
+        (,, uint256 raised,,,,) = pad.curves(token);
         pad.setMigrator(address(migrator));
 
         pad.migrate(token);
@@ -449,18 +469,18 @@ contract LaunchpadTest is Test {
         // bring the curve close to graduation
         vm.prank(bob);
         pad.buy{value: 4 ether}(token, 0);
-        (,,, uint256 sold, bool grad,) = pad.curves(token);
+        (,,, uint256 sold, bool grad,,) = pad.curves(token);
         if (!grad) {
             // ETH needed to finish the curve, then cross it with a fuzzed surplus
             uint256 remaining = pad.CURVE_SUPPLY() - sold;
-            (uint256 vEth, uint256 vToken,,,,) = pad.curves(token);
+            (uint256 vEth, uint256 vToken,,,,,) = pad.curves(token);
             uint256 ethNeeded = (vEth * vToken) / (vToken - remaining) - vEth + 1;
             uint256 gross = (ethNeeded * 10_000) / 9_900 + uint256(extra);
             vm.deal(bob, gross);
             vm.prank(bob);
             pad.buy{value: gross}(token, 0);
         }
-        (,,,, grad,) = pad.curves(token);
+        (,,,, grad,,) = pad.curves(token);
         assertTrue(grad);
     }
 
@@ -477,5 +497,80 @@ contract LaunchpadTest is Test {
         vm.stopPrank();
 
         assertLe(bob.balance, before); // fees make round trips strictly lossy
+    }
+
+
+    // ------------------------------------------------------- quote assets
+
+    function _createUsdCurve() internal returns (address token, MockUSD usd) {
+        usd = new MockUSD();
+        pad.setQuoteAsset(address(usd), 4_000e6); // virtual reserve: 4000 mUSD
+        vm.prank(alice);
+        token = pad.createToken("Stock Coin", "STK", 0, _meta(), address(usd));
+        usd.mint(bob, 1_000_000e6);
+        vm.prank(bob);
+        usd.approve(address(pad), type(uint256).max);
+    }
+
+    function test_quoteCurveRequiresWhitelist() public {
+        MockUSD usd = new MockUSD();
+        vm.prank(alice);
+        vm.expectRevert(Launchpad.QuoteAssetNotEnabled.selector);
+        pad.createToken("X", "X", 0, _meta(), address(usd));
+    }
+
+    function test_quoteCurveBuySellAndFees() public {
+        (address token, MockUSD usd) = _createUsdCurve();
+
+        vm.prank(bob);
+        pad.buyWithQuote(token, 1_000e6, 0);
+
+        assertGt(LaunchToken(token).balanceOf(bob), 0);
+        // 1% fee in mUSD: 50% creator, 30% cashback, 20% treasury
+        assertEq(pad.creatorFees(alice, address(usd)), 5e6);
+        assertEq(usd.balanceOf(treasury), 2e6);
+        assertApproxEqAbs(pad.cashbackOf(token, bob), 3e6, 10);
+
+        // native buy on a quote curve must revert
+        vm.deal(bob, 1 ether);
+        vm.prank(bob);
+        vm.expectRevert(Launchpad.WrongPayment.selector);
+        pad.buy{value: 1 ether}(token, 0);
+
+        // sell pays out mUSD
+        uint256 bal = LaunchToken(token).balanceOf(bob);
+        uint256 usdBefore = usd.balanceOf(bob);
+        vm.startPrank(bob);
+        LaunchToken(token).approve(address(pad), bal);
+        pad.sell(token, bal, 0);
+        vm.stopPrank();
+        assertGt(usd.balanceOf(bob), usdBefore);
+
+        // claims in mUSD
+        vm.prank(alice);
+        pad.claimCreatorFees(address(usd));
+        assertGt(usd.balanceOf(alice), 0);
+        vm.prank(bob);
+        pad.claimCashback(token);
+    }
+
+    function test_quoteCurveGraduatesAndMigratesInAsset() public {
+        (address token, MockUSD usd) = _createUsdCurve();
+
+        // curve raises ~ 4000 * 800/250 = 12800 mUSD; buy way past it
+        vm.prank(bob);
+        pad.buyWithQuote(token, 100_000e6, 0);
+
+        (,,, uint256 sold, bool graduated,,) = pad.curves(token);
+        assertTrue(graduated);
+        assertEq(sold, pad.CURVE_SUPPLY());
+
+        // auto-migration delivered the quote asset to the migrator
+        assertEq(migrator.lastToken(), token);
+        assertEq(migrator.lastQuoteAsset(), address(usd));
+        assertGt(migrator.lastQuoteAmount(), 12_000e6);
+        assertEq(usd.balanceOf(address(migrator)), migrator.lastQuoteAmount());
+        (,, uint256 realEthAfter,,,,) = pad.curves(token);
+        assertEq(realEthAfter, 0);
     }
 }

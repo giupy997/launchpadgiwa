@@ -113,9 +113,9 @@ export function useTrades(token: `0x${string}`) {
   });
 }
 
-/** Price per whole token (wei) implied by each trade, chronological. */
-export function pricePoints(trades: Trade[]): number[] {
+/** Price per whole token implied by each trade, in quote units. */
+export function pricePoints(trades: Trade[], quoteDecimals = 18): number[] {
   return trades
     .filter((t) => t.tokens > 0n)
-    .map((t) => Number((t.eth * 10n ** 18n) / t.tokens) / 1e18);
+    .map((t) => Number((t.eth * 10n ** 18n) / t.tokens) / 10 ** quoteDecimals);
 }

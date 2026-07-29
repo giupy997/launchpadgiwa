@@ -3,7 +3,7 @@
 import { fmtNum } from "@/lib/format";
 
 /** Minimal monochrome SVG line chart of trade-implied prices. */
-export function PriceChart({ points }: { points: number[] }) {
+export function PriceChart({ points, quoteSymbol = "ETH" }: { points: number[]; quoteSymbol?: string }) {
   if (points.length < 2) {
     return (
       <div className="rounded-xl border border-zinc-800 p-6 text-center text-sm text-zinc-600">
@@ -32,7 +32,7 @@ export function PriceChart({ points }: { points: number[] }) {
           Price · last {points.length} trades
         </span>
         <span className="font-mono text-xs text-zinc-300">
-          {fmt(last)} ETH {up ? "↗" : "↘"}
+          {fmt(last)} {quoteSymbol} {up ? "↗" : "↘"}
         </span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="none">

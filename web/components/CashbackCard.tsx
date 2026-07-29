@@ -8,11 +8,19 @@ import {
 } from "wagmi";
 import { launchpadAbi } from "@/lib/abi";
 import { useLaunchpadAddress, useAppChain } from "@/lib/hooks";
-import { fmtEth } from "@/lib/format";
+import { fmtUnits } from "@/lib/format";
 
 /** Holder cashback (30% of trade fees, pro-rata) for the connected wallet.
  *  Renders nothing on deployments that predate the cashback system. */
-export function CashbackCard({ token }: { token: `0x${string}` }) {
+export function CashbackCard({
+  token,
+  quoteSymbol = "ETH",
+  quoteDecimals = 18,
+}: {
+  token: `0x${string}`;
+  quoteSymbol?: string;
+  quoteDecimals?: number;
+}) {
   const pad = useLaunchpadAddress();
   const appChainId = useAppChain().id;
   const { address: user } = useAccount();
@@ -38,7 +46,7 @@ export function CashbackCard({ token }: { token: `0x${string}` }) {
         Holder cashback
       </div>
       <div className="mt-1 flex items-center gap-3">
-        <span className="font-semibold">{fmtEth(amount)} ETH</span>
+        <span className="font-semibold">{fmtUnits(amount, quoteDecimals)} {quoteSymbol}</span>
         {amount > 0n && (
           <button
             onClick={() => {

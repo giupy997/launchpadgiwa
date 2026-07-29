@@ -1,16 +1,20 @@
 "use client";
 
 import { type Trade } from "@/lib/events";
-import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
+import { fmtUnits, fmtTokens, shortAddr } from "@/lib/format";
 import { useExplorer } from "@/lib/hooks";
 
 export function TradeFeed({
   trades,
   symbol,
+  quoteSymbol = "ETH",
+  quoteDecimals = 18,
   truncated,
 }: {
   trades: Trade[];
   symbol: string;
+  quoteSymbol?: string;
+  quoteDecimals?: number;
   truncated: boolean;
 }) {
   const explorer = useExplorer();
@@ -44,7 +48,7 @@ export function TradeFeed({
             <span className="flex-1 text-right text-zinc-300">
               {fmtTokens(t.tokens)} {symbol}
             </span>
-            <span className="hidden sm:block w-28 text-right text-zinc-500">{fmtEth(t.eth)} ETH</span>
+            <span className="hidden sm:block w-28 text-right text-zinc-500">{fmtUnits(t.eth, quoteDecimals)} {quoteSymbol}</span>
             <a
               href={`${explorer}/tx/${t.tx}`}
               target="_blank"

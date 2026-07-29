@@ -159,6 +159,29 @@ export const launchpadAbi = [
   },
   {
     "type": "function",
+    "name": "buyWithQuote",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "amountIn",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "minTokensOut",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "cashbackDebt",
     "inputs": [
       {
@@ -221,7 +244,13 @@ export const launchpadAbi = [
   {
     "type": "function",
     "name": "claimCreatorFees",
-    "inputs": [],
+    "inputs": [
+      {
+        "name": "asset",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -280,6 +309,11 @@ export const launchpadAbi = [
             "internalType": "string"
           }
         ]
+      },
+      {
+        "name": "quoteAsset",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [
@@ -309,7 +343,12 @@ export const launchpadAbi = [
     "name": "creatorFees",
     "inputs": [
       {
-        "name": "creator",
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "asset",
         "type": "address",
         "internalType": "address"
       }
@@ -380,6 +419,11 @@ export const launchpadAbi = [
       },
       {
         "name": "creator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "quoteAsset",
         "type": "address",
         "internalType": "address"
       }
@@ -567,6 +611,25 @@ export const launchpadAbi = [
   },
   {
     "type": "function",
+    "name": "quoteVirtualReserve",
+    "inputs": [
+      {
+        "name": "asset",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
@@ -652,6 +715,24 @@ export const launchpadAbi = [
         "name": "newMigrator",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setQuoteAsset",
+    "inputs": [
+      {
+        "name": "asset",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "virtualReserve",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -1082,6 +1163,25 @@ export const launchpadAbi = [
   },
   {
     "type": "event",
+    "name": "QuoteAssetUpdated",
+    "inputs": [
+      {
+        "name": "asset",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "virtualReserve",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Sold",
     "inputs": [
       {
@@ -1215,6 +1315,11 @@ export const launchpadAbi = [
   },
   {
     "type": "error",
+    "name": "QuoteAssetNotEnabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
@@ -1237,6 +1342,11 @@ export const launchpadAbi = [
   {
     "type": "error",
     "name": "UnknownToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WrongPayment",
     "inputs": []
   },
   {

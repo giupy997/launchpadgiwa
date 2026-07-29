@@ -3,12 +3,15 @@ pragma solidity ^0.8.24;
 
 /// @title IDexMigrator
 /// @notice Adapter that receives a graduated token's reserved supply plus the
-///         ETH raised on the curve and seeds liquidity on a DEX. One adapter
-///         per chain keeps the Launchpad itself chain-agnostic (GIWA today,
-///         other EVM chains later).
+///         quote raised on the curve and seeds liquidity on a DEX. One adapter
+///         per chain keeps the Launchpad itself chain-agnostic.
 interface IDexMigrator {
     /// @param token        the graduated token
     /// @param tokenAmount  tokens transferred to the migrator for liquidity
-    /// @dev   the ETH for the pool is sent as msg.value
-    function migrate(address token, uint256 tokenAmount) external payable;
+    /// @param quoteAsset   address(0) for native ETH (sent as msg.value),
+    ///                     otherwise the ERC-20 already transferred here
+    /// @param quoteAmount  amount of the quote asset provided
+    function migrate(address token, uint256 tokenAmount, address quoteAsset, uint256 quoteAmount)
+        external
+        payable;
 }

@@ -1,4 +1,4 @@
-import { formatEther } from "viem";
+import { formatEther, formatUnits } from "viem";
 
 const SUB = "₀₁₂₃₄₅₆₇₈₉";
 
@@ -19,6 +19,11 @@ function subscriptSmall(v: number, sig = 3): string {
 export function fmtEth(wei: bigint): string {
   const v = Number(formatEther(wei));
   return fmtNum(v);
+}
+
+/** Same, for assets with arbitrary decimals (quote assets). */
+export function fmtUnits(amount: bigint, decimals: number): string {
+  return fmtNum(Number(formatUnits(amount, decimals)));
 }
 
 /** Same formatting for plain numbers (chart axis, prices). */

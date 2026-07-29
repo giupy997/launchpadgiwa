@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useChainId, useReadContract, useReadContracts } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "./abi";
-import { APP_CHAINS, giwaSepolia, LAUNCHPAD_ADDRESS } from "./config";
+import { APP_CHAINS, giwaSepolia, LAUNCHPAD_ADDRESS, QUOTE_ASSETS } from "./config";
 
 /** The app chain currently selected (falls back to GIWA Sepolia). */
 export function useAppChain() {
@@ -28,7 +28,10 @@ export type CurveInfo = {
   sold: bigint;
   graduated: boolean;
   creator: `0x${string}`;
+  quoteAsset: `0x${string}`;
 };
+
+export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`;
 
 export type TokenMeta = {
   logoURI: string;
@@ -50,15 +53,27 @@ export type TokenInfo = {
 const REFETCH = { refetchInterval: 5_000 } as const;
 
 export function parseCurve(result: unknown): CurveInfo {
-  const [vEth, vToken, realEth, sold, graduated, creator] = result as readonly [
+  const [vEth, vToken, realEth, sold, graduated, creator, quoteAsset] = result as readonly [
     bigint,
     bigint,
     bigint,
     bigint,
     boolean,
     `0x${string}`,
+    `0x${string}`,
   ];
-  return { vEth, vToken, realEth, sold, graduated, creator };
+  return { vEth, vToken, realEth, sold, graduated, creator, quoteAsset };
+}
+
+/** Display info for a curve's quote asset, resolved from the registry. */
+export function quoteInfo(chainId: number, quoteAsset: `0x${string}`): { symbol: string; decimals: number; address: `0x${string}` | null } {
+  if (quoteAsset === ZERO_ADDRESS) return { symbol: "ETH", decimals: 18, address: null };
+  const found = (QUOTE_ASSETS[chainId] ?? []).find(
+    (q) => q.address?.toLowerCase() === quoteAsset.toLowerCase()
+  );
+  return found
+    ? { symbol: found.symbol, decimals: found.decimals, address: found.address }
+    : { symbol: "?", decimals: 18, address: quoteAsset };
 }
 
 export function parseMeta(result: unknown): TokenMeta {

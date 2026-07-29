@@ -4,8 +4,8 @@ import { useState } from "react";
 import { formatEther, parseEther } from "viem";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { launchpadAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useExplorer, useAppChain } from "@/lib/hooks";
-import { robinhood } from "@/lib/config";
+import { useLaunchpadAddress, useExplorer, useAppChain, ZERO_ADDRESS } from "@/lib/hooks";
+import { robinhood, QUOTE_ASSETS } from "@/lib/config";
 import { TokenLogo } from "@/components/TokenLogo";
 import { processLogoFile, dataUriBytes } from "@/lib/image";
 import { fmtTokens } from "@/lib/format";
@@ -47,6 +47,7 @@ export function CreateTokenForm() {
   const [twitter, setTwitter] = useState("");
   const [telegram, setTelegram] = useState("");
   const [logoError, setLogoError] = useState("");
+  const [quoteIdx, setQuoteIdx] = useState(0);
   const [logoProcessing, setLogoProcessing] = useState(false);
 
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
@@ -64,6 +65,10 @@ export function CreateTokenForm() {
       setLogoProcessing(false);
     }
   }
+
+  const quoteAssets = QUOTE_ASSETS[chain.id] ?? [{ address: null, symbol: "ETH", decimals: 18 }];
+  const quote = quoteAssets[Math.min(quoteIdx, quoteAssets.length - 1)];
+  const isEthQuote = quote.address === null;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,8 +89,9 @@ export function CreateTokenForm() {
           livestream: "",
           description: description.trim(),
         },
+        quote.address ?? ZERO_ADDRESS,
       ],
-      value: initialBuy ? parseEther(initialBuy) : 0n,
+      value: isEthQuote && initialBuy ? parseEther(initialBuy) : 0n,
     });
   }
 
@@ -179,6 +185,29 @@ export function CreateTokenForm() {
         </div>
 
         <div>
+          <Label>Pair with <span className="normal-case text-zinc-600">the asset your curve is priced in</span></Label>
+          <div className="flex gap-2 flex-wrap">
+            {quoteAssets.map((q, i) => (
+              <button
+                key={q.symbol}
+                type="button"
+                onClick={() => setQuoteIdx(i)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-mono ${
+                  i === quoteIdx
+                    ? "bg-white text-black"
+                    : "border border-zinc-700 text-zinc-400 hover:border-white hover:text-white"
+                }`}
+              >
+                {q.symbol}
+              </button>
+            ))}
+          </div>
+          {!isEthQuote && (
+            <Hint>Buys, sells, fees and the graduation pool will all be in {quote.symbol}.</Hint>
+          )}
+        </div>
+
+        <div>
           <Label>Dev buy <span className="normal-case text-zinc-600">optional — be the first holder</span></Label>
           <div className="flex gap-2 items-center flex-wrap">
             {["0", "0.01", "0.05", "0.1"].map((v) => (
@@ -205,8 +234,11 @@ export function CreateTokenForm() {
               className="w-24 rounded-full bg-black border border-zinc-700 px-3 py-1.5 text-xs font-mono focus:border-white outline-none text-right"
             />
           </div>
-          {devBuyNum > 0 && (
+          {isEthQuote && devBuyNum > 0 && (
             <Hint>≈ {fmtTokens(BigInt(Math.floor(estTokens)) * 10n ** 18n)} ${ticker || "TOKENS"} at launch price</Hint>
+          )}
+          {!isEthQuote && (
+            <Hint>Dev buy in {quote.symbol} is done right after launch from the token page.</Hint>
           )}
         </div>
 
@@ -276,7 +308,8 @@ export function CreateTokenForm() {
             <Row k="Fee split" v="50% you · 30% holders · 20% treasury" strong />
             <Row k="Holders earn" v="Native ETH cashback" />
             <Row k="Supply" v="1B fixed" />
-            <Row k="Curve" v="800M · graduates at ~4 ETH" />
+            <Row k="Pair" v={quote.symbol} strong />
+            <Row k="Curve" v={isEthQuote ? "800M · graduates at ~4 ETH" : `800M on the ${quote.symbol} curve`} />
             <Row
               k="Liquidity"
               v={chain.id === robinhood.id ? "Auto-locked on Uniswap v3" : "Locked at graduation"}

@@ -43,14 +43,27 @@ export const APP_CHAINS = [giwaSepolia, robinhood] as const;
 
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}` | undefined> = {
-  [giwaSepolia.id]: "0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81",
+  [giwaSepolia.id]: "0xD04C4b497139E174d832058F3b94F700E02c72E0",
   [robinhood.id]: "0xD74910600799db791e50BaBF3C7493AAd8A3B258",
 };
 
 // Launchpad deployment blocks: where on-chain event scans start.
 export const LAUNCHPAD_DEPLOY_BLOCK: Record<number, bigint> = {
-  [giwaSepolia.id]: 31_851_221n, // v6
+  [giwaSepolia.id]: 31_991_098n, // v7
   [robinhood.id]: 21_145_217n,
+};
+
+// Quote assets offered at launch per chain. address null = native ETH.
+// To add one (e.g. a tokenized stock): owner must also enable it on-chain
+// with setQuoteAsset(asset, virtualReserve).
+export type QuoteAssetInfo = {
+  address: `0x${string}` | null;
+  symbol: string;
+  decimals: number;
+};
+export const QUOTE_ASSETS: Record<number, QuoteAssetInfo[]> = {
+  [giwaSepolia.id]: [{ address: null, symbol: "ETH", decimals: 18 }],
+  [robinhood.id]: [{ address: null, symbol: "ETH", decimals: 18 }],
 };
 
 // OP Stack standard bridge for GIWA Sepolia (on Ethereum Sepolia, L1).

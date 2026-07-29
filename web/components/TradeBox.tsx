@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { parseEther } from "viem";
+import { erc20Abi, parseUnits } from "viem";
 import {
   useAccount,
   useReadContract,
@@ -9,30 +9,40 @@ import {
   useWriteContract,
 } from "wagmi";
 import { launchpadAbi, launchTokenAbi } from "@/lib/abi";
-import { useLaunchpadAddress, useExplorer, useAppChain } from "@/lib/hooks";
-import { fmtEth, fmtTokens } from "@/lib/format";
+import {
+  useLaunchpadAddress,
+  useExplorer,
+  useAppChain,
+  quoteInfo,
+  type CurveInfo,
+} from "@/lib/hooks";
+import { fmtUnits, fmtTokens } from "@/lib/format";
 import { SlippageControl, useSlippageBps } from "@/components/SlippageControl";
 
 export function TradeBox({
   token,
   symbol,
-  graduated,
+  curve,
 }: {
   token: `0x${string}`;
   symbol: string;
-  graduated: boolean;
+  curve: CurveInfo;
 }) {
   const padMaybe = useLaunchpadAddress();
   const deployed = !!padMaybe;
   const pad = padMaybe ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
-  const appChainId = useAppChain().id;
+  const chain = useAppChain();
   const { address: user, isConnected } = useAccount();
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [slippageBps, setSlippageBps] = useSlippageBps();
   const [amount, setAmount] = useState("");
 
-  const parsed = safeParse(amount);
+  const q = quoteInfo(chain.id, curve.quoteAsset);
+  const isEthQuote = q.address === null;
+  const graduated = curve.graduated;
+
+  const parsed = safeParse(amount, mode === "buy" ? q.decimals : 18);
 
   const { data: balance } = useReadContract({
     address: token,
@@ -48,6 +58,23 @@ export function TradeBox({
     functionName: "allowance",
     args: user ? [user, pad] : undefined,
     query: { enabled: !!user, refetchInterval: 5_000 },
+  });
+
+  // ERC-20 quote curves: quote-asset allowance and balance for the buy side
+  const { data: quoteAllowance } = useReadContract({
+    address: q.address ?? undefined,
+    abi: erc20Abi,
+    functionName: "allowance",
+    args: user && q.address ? [user, pad] : undefined,
+    query: { enabled: !!user && !!q.address, refetchInterval: 5_000 },
+  });
+
+  const { data: quoteBalance } = useReadContract({
+    address: q.address ?? undefined,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: user && q.address ? [user] : undefined,
+    query: { enabled: !!user && !!q.address, refetchInterval: 5_000 },
   });
 
   const { data: buyQuote } = useReadContract({
@@ -69,8 +96,13 @@ export function TradeBox({
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  const needsApproval =
+  const needsSellApproval =
     mode === "sell" && parsed > 0n && (allowance === undefined || (allowance as bigint) < parsed);
+  const needsBuyApproval =
+    mode === "buy" &&
+    !isEthQuote &&
+    parsed > 0n &&
+    (quoteAllowance === undefined || (quoteAllowance as bigint) < parsed);
 
   function withSlippage(quote: bigint): bigint {
     return quote - (quote * BigInt(slippageBps)) / 10_000n;
@@ -80,20 +112,38 @@ export function TradeBox({
     e.preventDefault();
     reset();
     if (mode === "buy") {
-      writeContract({
-        address: pad,
-        abi: launchpadAbi,
-        functionName: "buy",
-        chainId: appChainId,
-        args: [token, buyQuote !== undefined ? withSlippage(buyQuote as bigint) : 0n],
-        value: parsed,
-      });
-    } else if (needsApproval) {
+      if (isEthQuote) {
+        writeContract({
+          address: pad,
+          abi: launchpadAbi,
+          functionName: "buy",
+          chainId: chain.id,
+          args: [token, buyQuote !== undefined ? withSlippage(buyQuote as bigint) : 0n],
+          value: parsed,
+        });
+      } else if (needsBuyApproval) {
+        writeContract({
+          address: q.address!,
+          abi: erc20Abi,
+          functionName: "approve",
+          chainId: chain.id,
+          args: [pad, parsed],
+        });
+      } else {
+        writeContract({
+          address: pad,
+          abi: launchpadAbi,
+          functionName: "buyWithQuote",
+          chainId: chain.id,
+          args: [token, parsed, buyQuote !== undefined ? withSlippage(buyQuote as bigint) : 0n],
+        });
+      }
+    } else if (needsSellApproval) {
       writeContract({
         address: token,
         abi: launchTokenAbi,
         functionName: "approve",
-        chainId: appChainId,
+        chainId: chain.id,
         args: [pad, parsed],
       });
     } else {
@@ -101,7 +151,7 @@ export function TradeBox({
         address: pad,
         abi: launchpadAbi,
         functionName: "sell",
-        chainId: appChainId,
+        chainId: chain.id,
         args: [token, parsed, sellQuote !== undefined ? withSlippage(sellQuote as bigint) : 0n],
       });
     }
@@ -111,8 +161,8 @@ export function TradeBox({
     return (
       <div className="rounded-xl border border-zinc-700 bg-black p-5 h-fit">
         <p className="text-sm text-zinc-300">
-          🎓 Curve completed: trading here is closed. This token&apos;s liquidity
-          lives (or will live) on the DEX after migration.
+          🎓 Curve completed: trading here is closed. This token now trades on
+          the DEX, paired with {q.symbol}.
         </p>
       </div>
     );
@@ -134,12 +184,17 @@ export function TradeBox({
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={mode === "buy" ? "ETH to spend" : `${symbol} to sell`}
+            placeholder={mode === "buy" ? `${q.symbol} to spend` : `${symbol} to sell`}
             type="number"
             step="any"
             min="0"
             className="w-full rounded-lg bg-black border border-zinc-700 px-3 py-2 text-sm focus:border-white outline-none"
           />
+          {mode === "buy" && !isEthQuote && quoteBalance !== undefined && (
+            <p className="mt-1 text-xs text-zinc-500">
+              Balance: {fmtUnits(quoteBalance as bigint, q.decimals)} {q.symbol}
+            </p>
+          )}
           {mode === "sell" && balance !== undefined && (
             <button
               type="button"
@@ -157,31 +212,33 @@ export function TradeBox({
           </p>
         )}
         {parsed > 0n && mode === "sell" && sellQuote !== undefined && (
-          <p className="text-sm text-zinc-400">≈ {fmtEth(sellQuote as bigint)} ETH</p>
+          <p className="text-sm text-zinc-400">
+            ≈ {fmtUnits(sellQuote as bigint, q.decimals)} {q.symbol}
+          </p>
         )}
 
         <button
           type="submit"
           disabled={!deployed || !isConnected || parsed === 0n || isPending || isConfirming}
           className={`w-full rounded-lg py-2.5 font-semibold text-black disabled:opacity-40 ${
-            mode === "buy"
-              ? "bg-white hover:bg-zinc-200"
-              : "bg-zinc-300 hover:bg-white"
+            mode === "buy" ? "bg-white hover:bg-zinc-200" : "bg-zinc-300 hover:bg-white"
           }`}
         >
           {!deployed
             ? "Not deployed on this chain"
             : !isConnected
-            ? "Connect wallet"
-            : isPending
-              ? "Sign in wallet…"
-              : isConfirming
-                ? "Confirming…"
-                : needsApproval
-                  ? `Approve ${symbol}`
-                  : mode === "buy"
-                    ? "Buy"
-                    : "Sell"}
+              ? "Connect wallet"
+              : isPending
+                ? "Sign in wallet…"
+                : isConfirming
+                  ? "Confirming…"
+                  : needsBuyApproval
+                    ? `Approve ${q.symbol}`
+                    : needsSellApproval
+                      ? `Approve ${symbol}`
+                      : mode === "buy"
+                        ? "Buy"
+                        : "Sell"}
         </button>
       </form>
 
@@ -226,9 +283,9 @@ function Tab({
   );
 }
 
-function safeParse(v: string): bigint {
+function safeParse(v: string, decimals: number): bigint {
   try {
-    return v ? parseEther(v) : 0n;
+    return v ? parseUnits(v, decimals) : 0n;
   } catch {
     return 0n;
   }

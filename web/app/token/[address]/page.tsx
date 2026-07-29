@@ -9,8 +9,10 @@ import {
   parseCurve,
   parseMeta,
   useExplorer,
+  useAppChain,
+  quoteInfo,
 } from "@/lib/hooks";
-import { fmtEth, fmtTokens, shortAddr } from "@/lib/format";
+import { fmtUnits, fmtTokens, shortAddr } from "@/lib/format";
 import { TradeBox } from "@/components/TradeBox";
 import { TokenLogo } from "@/components/TokenLogo";
 import { PriceChart } from "@/components/PriceChart";
@@ -28,6 +30,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
   const { data: tradeData } = useTrades(token);
   const pad = useLaunchpadAddress() ?? ("0x0000000000000000000000000000000000000000" as `0x${string}`);
   const explorer = useExplorer();
+  const chain = useAppChain();
 
   const { data, isLoading } = useReadContracts({
     contracts: [
@@ -74,6 +77,7 @@ export default function TokenPage({ params }: { params: { address: string } }) {
       ? parseMeta(metaR.result)
       : { logoURI: "", website: "", twitter: "", telegram: "", livestream: "", description: "" };
   const progress = curveProgress(curve);
+  const q = quoteInfo(chain.id, curve.quoteAsset);
 
   const links = [
     { label: "Website", href: safeLink(meta.website) },
@@ -100,7 +104,8 @@ export default function TokenPage({ params }: { params: { address: string } }) {
               <a href={`${explorer}/address/${token}`} target="_blank" className="underline">
                 {shortAddr(token)}
               </a>{" "}
-              · creator {shortAddr(curve.creator)}
+              · creator {shortAddr(curve.creator)} · paired with{" "}
+              <span className="text-zinc-300">{q.symbol}</span>
             </p>
             {meta.description && (
               <p className="mt-2 text-sm text-zinc-400 max-w-lg">{meta.description}</p>
@@ -126,8 +131,8 @@ export default function TokenPage({ params }: { params: { address: string } }) {
         {meta.livestream && <LiveStream url={meta.livestream} />}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Stat label="Price" value={`${fmtEth(spotPrice(curve))} ETH`} />
-          <Stat label="Raised" value={`${fmtEth(curve.realEth)} ETH`} />
+          <Stat label="Price" value={`${fmtUnits(spotPrice(curve), q.decimals)} ${q.symbol}`} />
+          <Stat label="Raised" value={`${fmtUnits(curve.realEth, q.decimals)} ${q.symbol}`} />
           <Stat label="Sold" value={fmtTokens(curve.sold)} />
           <Stat label="Curve" value={curve.graduated ? "Graduated" : `${progress.toFixed(1)}%`} />
         </div>
@@ -144,17 +149,19 @@ export default function TokenPage({ params }: { params: { address: string } }) {
           </p>
         </div>
 
-        <PriceChart points={pricePoints(tradeData?.trades ?? [])} />
+        <PriceChart points={pricePoints(tradeData?.trades ?? [], q.decimals)} quoteSymbol={q.symbol} />
         <TradeFeed
           trades={tradeData?.trades ?? []}
           symbol={symbol}
+          quoteSymbol={q.symbol}
+          quoteDecimals={q.decimals}
           truncated={tradeData?.truncated ?? false}
         />
       </div>
 
       <div className="order-1 lg:order-2 space-y-6">
-        <TradeBox token={token} symbol={symbol} graduated={curve.graduated} />
-        <CashbackCard token={token} />
+        <TradeBox token={token} symbol={symbol} curve={curve} />
+        <CashbackCard token={token} quoteSymbol={q.symbol} quoteDecimals={q.decimals} />
         {user && user.toLowerCase() === curve.creator.toLowerCase() && (
           <CreatorPanel token={token} meta={meta} />
         )}
