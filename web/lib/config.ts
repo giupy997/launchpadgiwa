@@ -43,13 +43,13 @@ export const APP_CHAINS = [giwaSepolia, robinhood] as const;
 
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}` | undefined> = {
-  [giwaSepolia.id]: "0xD04C4b497139E174d832058F3b94F700E02c72E0",
+  [giwaSepolia.id]: "0x8E1a1308E3b176528Ee9278d7a531F185F9fBeFD",
   [robinhood.id]: "0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81",
 };
 
 // Launchpad deployment blocks: where on-chain event scans start.
 export const LAUNCHPAD_DEPLOY_BLOCK: Record<number, bigint> = {
-  [giwaSepolia.id]: 31_991_098n, // v7
+  [giwaSepolia.id]: 31_997_798n, // v7.1
   [robinhood.id]: 22_541_519n, // v7
 };
 
@@ -60,23 +60,41 @@ export type QuoteAssetInfo = {
   address: `0x${string}` | null;
   symbol: string;
   decimals: number;
+  /** Uniswap v3 fee hops from WETH for ETH zap buys:
+   *  [f1] = WETH -f1-> asset · [f1, f2] = WETH -f1-> USDG -f2-> asset.
+   *  Omitted = no ETH route (direct asset buys only). */
+  zapFees?: number[];
 };
 export const QUOTE_ASSETS: Record<number, QuoteAssetInfo[]> = {
   [giwaSepolia.id]: [{ address: null, symbol: "ETH", decimals: 18 }],
   [robinhood.id]: [
     { address: null, symbol: "ETH", decimals: 18 },
-    { address: "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC", symbol: "NVDA", decimals: 18 },
-    { address: "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9", symbol: "AAPL", decimals: 18 },
-    { address: "0x322F0929c4625eD5bAd873c95208D54E1c003b2d", symbol: "TSLA", decimals: 18 },
-    { address: "0x1b0E319c6A659F002271B69dB8A7df2F911c153E", symbol: "GME", decimals: 18 },
-    { address: "0xe93237C50D904957Cf27E7B1133b510C669c2e74", symbol: "MSFT", decimals: 18 },
-    { address: "0x12f190a9F9d7D37a250758b26824B97CE941bF54", symbol: "AMZN", decimals: 18 },
+    { address: "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC", symbol: "NVDA", decimals: 18, zapFees: [500, 500] },
+    { address: "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9", symbol: "AAPL", decimals: 18, zapFees: [500, 3000] },
+    { address: "0x322F0929c4625eD5bAd873c95208D54E1c003b2d", symbol: "TSLA", decimals: 18, zapFees: [500, 3000] },
+    { address: "0x1b0E319c6A659F002271B69dB8A7df2F911c153E", symbol: "GME", decimals: 18, zapFees: [500, 500] },
+    { address: "0xe93237C50D904957Cf27E7B1133b510C669c2e74", symbol: "MSFT", decimals: 18, zapFees: [500, 3000] },
+    { address: "0x12f190a9F9d7D37a250758b26824B97CE941bF54", symbol: "AMZN", decimals: 18, zapFees: [500, 3000] },
     { address: "0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35", symbol: "META", decimals: 18 },
-    { address: "0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3", symbol: "GOOGL", decimals: 18 },
+    { address: "0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3", symbol: "GOOGL", decimals: 18, zapFees: [500, 3000] },
     { address: "0x6330D8C3178a418788dF01a47479c0ce7CCF450b", symbol: "COIN", decimals: 18 },
     { address: "0x894E1EC2D74FFE5AEF8Dc8A9e84686acCB964F2A", symbol: "PLTR", decimals: 18 },
     { address: "0x86923f96303D656E4aa86D9d42D1e57ad2023fdC", symbol: "AMD", decimals: 18 },
   ],
+};
+
+// ETH-zap infrastructure on Robinhood Chain (router deployed per launchpad).
+export const ZAP_ROUTER: Record<number, `0x${string}` | undefined> = {
+  [robinhood.id]: undefined, // set after DeployZap
+};
+export const UNISWAP_QUOTER: Record<number, `0x${string}` | undefined> = {
+  [robinhood.id]: "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7",
+};
+export const WETH9: Record<number, `0x${string}` | undefined> = {
+  [robinhood.id]: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+};
+export const USDG: Record<number, `0x${string}` | undefined> = {
+  [robinhood.id]: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
 };
 
 // OP Stack standard bridge for GIWA Sepolia (on Ethereum Sepolia, L1).

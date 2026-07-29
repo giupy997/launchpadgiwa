@@ -169,14 +169,28 @@ contract Launchpad is Ownable, ReentrancyGuard {
         }
     }
 
-    /// @notice Initial/dev buy helper for ERC-20 quoted curves.
+    /// @notice Buy on an ERC-20 quoted curve, paying from msg.sender.
     function buyWithQuote(address token, uint256 amountIn, uint256 minTokensOut) external nonReentrant {
+        _buyWithQuote(token, amountIn, minTokensOut, msg.sender);
+    }
+
+    /// @notice Buy on an ERC-20 quoted curve for `recipient`: the quote is
+    ///         pulled from msg.sender, tokens/refunds/cashback go to the
+    ///         recipient. Lets routers zap ETH -> quote -> curve in one tx.
+    function buyWithQuoteFor(address token, uint256 amountIn, uint256 minTokensOut, address recipient)
+        external
+        nonReentrant
+    {
+        _buyWithQuote(token, amountIn, minTokensOut, recipient);
+    }
+
+    function _buyWithQuote(address token, uint256 amountIn, uint256 minTokensOut, address recipient) internal {
         if (amountIn == 0) revert ZeroAmount();
         Curve storage c = curves[token];
         if (c.vEth == 0) revert UnknownToken();
         if (c.quoteAsset == address(0)) revert WrongPayment();
         IERC20(c.quoteAsset).safeTransferFrom(msg.sender, address(this), amountIn);
-        _buy(token, msg.sender, amountIn, minTokensOut);
+        _buy(token, recipient, amountIn, minTokensOut);
     }
 
     /// @notice Redirect this token's creator fee share to another wallet
