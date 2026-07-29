@@ -44,13 +44,13 @@ export const APP_CHAINS = [giwaSepolia, robinhood] as const;
 // One address per chain: add future deployments here (multichain).
 export const LAUNCHPAD_ADDRESS: Record<number, `0x${string}` | undefined> = {
   [giwaSepolia.id]: "0x8E1a1308E3b176528Ee9278d7a531F185F9fBeFD",
-  [robinhood.id]: "0x88d5d0B0233768192e1E79fa146DB6e5E1aa0E81",
+  [robinhood.id]: "0xDE295591af5A8c950fB5Edf564B82a4b0A5f2B04",
 };
 
 // Launchpad deployment blocks: where on-chain event scans start.
 export const LAUNCHPAD_DEPLOY_BLOCK: Record<number, bigint> = {
   [giwaSepolia.id]: 31_997_798n, // v7.1
-  [robinhood.id]: 22_541_519n, // v7
+  [robinhood.id]: 22_624_070n, // v7.1
 };
 
 // Quote assets offered at launch per chain. address null = native ETH.
@@ -85,7 +85,7 @@ export const QUOTE_ASSETS: Record<number, QuoteAssetInfo[]> = {
 
 // ETH-zap infrastructure on Robinhood Chain (router deployed per launchpad).
 export const ZAP_ROUTER: Record<number, `0x${string}` | undefined> = {
-  [robinhood.id]: undefined, // set after DeployZap
+  [robinhood.id]: "0x24D96Ec9162264F3E42edE7169dc8967d71E1cfb",
 };
 export const UNISWAP_QUOTER: Record<number, `0x${string}` | undefined> = {
   [robinhood.id]: "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7",
