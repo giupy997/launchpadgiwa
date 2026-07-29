@@ -8,6 +8,7 @@ import { Providers } from "./providers";
 import { ConnectButton } from "@/components/ConnectButton";
 import { ChainSwitcher } from "@/components/ChainSwitcher";
 import { Nav } from "@/components/Nav";
+import { LogoVideo } from "@/components/LogoVideo";
 import { BottomNav } from "@/components/BottomNav";
 import Link from "next/link";
 
@@ -41,8 +42,9 @@ export default function RootLayout({
             <div className="mx-auto max-w-5xl px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
               <Link
                 href="/"
-                className="font-mono text-lg font-bold tracking-[0.25em] uppercase shrink-0"
+                className="flex items-center gap-2.5 font-mono text-lg font-bold tracking-[0.25em] uppercase shrink-0"
               >
+                <LogoVideo className="h-9 w-9 rounded-lg object-cover pointer-events-none select-none" />
                 NOTUS
               </Link>
               <Nav />
