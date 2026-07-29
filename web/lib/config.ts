@@ -63,7 +63,20 @@ export type QuoteAssetInfo = {
 };
 export const QUOTE_ASSETS: Record<number, QuoteAssetInfo[]> = {
   [giwaSepolia.id]: [{ address: null, symbol: "ETH", decimals: 18 }],
-  [robinhood.id]: [{ address: null, symbol: "ETH", decimals: 18 }],
+  [robinhood.id]: [
+    { address: null, symbol: "ETH", decimals: 18 },
+    { address: "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC", symbol: "NVDA", decimals: 18 },
+    { address: "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9", symbol: "AAPL", decimals: 18 },
+    { address: "0x322F0929c4625eD5bAd873c95208D54E1c003b2d", symbol: "TSLA", decimals: 18 },
+    { address: "0x1b0E319c6A659F002271B69dB8A7df2F911c153E", symbol: "GME", decimals: 18 },
+    { address: "0xe93237C50D904957Cf27E7B1133b510C669c2e74", symbol: "MSFT", decimals: 18 },
+    { address: "0x12f190a9F9d7D37a250758b26824B97CE941bF54", symbol: "AMZN", decimals: 18 },
+    { address: "0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35", symbol: "META", decimals: 18 },
+    { address: "0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3", symbol: "GOOGL", decimals: 18 },
+    { address: "0x6330D8C3178a418788dF01a47479c0ce7CCF450b", symbol: "COIN", decimals: 18 },
+    { address: "0x894E1EC2D74FFE5AEF8Dc8A9e84686acCB964F2A", symbol: "PLTR", decimals: 18 },
+    { address: "0x86923f96303D656E4aa86D9d42D1e57ad2023fdC", symbol: "AMD", decimals: 18 },
+  ],
 };
 
 // OP Stack standard bridge for GIWA Sepolia (on Ethereum Sepolia, L1).
