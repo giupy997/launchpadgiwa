@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { formatEther, parseEther } from "viem";
+import { useMemo, useState } from "react";
+import { formatEther, parseEther, parseEventLogs } from "viem";
+import Link from "next/link";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { launchpadAbi } from "@/lib/abi";
 import { useLaunchpadAddress, useExplorer, useAppChain, ZERO_ADDRESS } from "@/lib/hooks";
@@ -51,7 +52,23 @@ export function CreateTokenForm() {
   const [logoProcessing, setLogoProcessing] = useState(false);
 
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { data: receipt, isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const [copied, setCopied] = useState(false);
+
+  // the new token's address, from the TokenCreated event in the receipt
+  const newToken = useMemo(() => {
+    if (!receipt) return null;
+    try {
+      const events = parseEventLogs({
+        abi: launchpadAbi,
+        logs: receipt.logs,
+        eventName: "TokenCreated",
+      });
+      return (events[0]?.args as { token?: `0x${string}` } | undefined)?.token ?? null;
+    } catch {
+      return null;
+    }
+  }, [receipt]);
 
   async function onLogoFile(file: File | undefined) {
     if (!file) return;
@@ -263,15 +280,41 @@ export function CreateTokenForm() {
         </button>
 
         {isSuccess && hash && (
-          <p className="text-sm text-zinc-300">
-            Token created!{" "}
-            <a href={`${explorer}/tx/${hash}`} target="_blank" className="underline">
-              View transaction
-            </a>{" "}
-            <button type="button" onClick={() => reset()} className="text-zinc-500 underline ml-2">
-              ok
-            </button>
-          </p>
+          <div className="rounded-xl border border-zinc-700 bg-black p-4 space-y-3">
+            <p className="text-sm text-white font-semibold">🎉 Token created!</p>
+            {newToken && (
+              <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <code className="font-mono text-xs text-zinc-300 break-all">{newToken}</code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(newToken);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    }}
+                    className="rounded-full border border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-300 hover:border-white hover:text-white shrink-0"
+                  >
+                    {copied ? "Copied ✓" : "Copy CA"}
+                  </button>
+                </div>
+                <Link
+                  href={`/token/${newToken}`}
+                  className="block w-full rounded-full bg-white py-2 text-center text-sm font-semibold text-black hover:bg-zinc-200"
+                >
+                  Open trading page →
+                </Link>
+              </>
+            )}
+            <p className="text-xs text-zinc-500">
+              <a href={`${explorer}/tx/${hash}`} target="_blank" className="underline">
+                View transaction
+              </a>
+              <button type="button" onClick={() => reset()} className="text-zinc-600 underline ml-3">
+                dismiss
+              </button>
+            </p>
+          </div>
         )}
         {error && (
           <p className="text-sm text-zinc-400 break-all border border-zinc-700 rounded-lg p-2">
